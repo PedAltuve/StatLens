@@ -6,3 +6,5 @@
 ## SavedVariables: StatLensDB
 
 Core.lua
+Data/Shaman.lua
+Talents.lua
