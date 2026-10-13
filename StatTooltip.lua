@@ -16,6 +16,7 @@ local LABELS = {
 	{ "Spell Power", "sp" },
 	{ "Bonus Damage", "sp" },
 	{ "Spell Damage", "sp" },
+	{ "Spell Healing", "sp" },
 	{ "Strength", "str" },
 	{ "Agility", "agi" },
 	{ "Stamina", "stam" },
