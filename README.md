@@ -2,12 +2,14 @@
 
 WoW: Forever addon that explains how your talents change your character stats.
 
-MVP scope: Shaman (Enhancement tree), enUS client, Interface 16001 (beta build 1.60.1.70338).
+Supported: Shaman (Enhancement tree) and Druid (Feral Combat tree, plus Nature's Majesty). enUS client, Interface 16001 (beta build 1.60.1.70338).
 
 ## What it shows
 
 - **Character panel** next to the character window: each stat with the talents that contribute to it, including chained effects (for example, Ancestral Knowledge raises Intellect, which Mental Dexterity turns into Attack Power).
 - **Talent tooltips**: what the talent gives you now and what the next point would add, using your current stats.
+- **Character stat tooltips**: hovering a stat row (Intellect, Attack Power, ...) appends the talents behind it, in the native tooltip style.
+- **Form-gated talents** (Druid): effects that only apply in Cat, Bear or Moonkin Form are shown in grey with their value in that form while you are in another form.
 - **Conditional talents** (Flurry, Maelstrom Weapon, Stormstrike, ...) are explained, not measured: they do not change the character sheet.
 
 Values marked `*` use inferred per-rank numbers (only rank 1 and max rank were published). Verify them in game.
@@ -23,7 +25,10 @@ The client reports final totals, with talents already applied. StatLens inverts 
 - Percent talents: `base = total / (1 + p)`, contribution `= total - base`.
 - Stat-from-stat talents: `ratio x source total`. The share coming from a percent talent on the source stat is shown as an `incl.` line.
 - Flat talents (crit, dodge): the per-rank value.
+- Per-level talents (Predatory Strikes, Thick Hide): `ratio x level`.
+- Inactive form effects are hypothetical: computed on your current stats, never counted in the talent total.
 
+Thick Hide only counts base armor per level; the defense-skill bonus and form armor multipliers are not included, so in Bear Form its share is understated.
 Assumption: talent percentages multiply the buffed stat. If the client stacks them differently, numbers drift slightly.
 
 ## Commands
@@ -33,6 +38,8 @@ Assumption: talent percentages multiply the buffed stat. If the client stacks th
 | `/sl help` | List commands |
 | `/sl talents` | Print detected talent ranks, missing and unmatched talents |
 | `/sl panel` | Toggle the character panel |
+| `/sl offset <n>` / `/sl offset auto` | Move the panel manually / back to automatic placement |
+| `/sl form` | Print the raw shapeshift form id and its mapped name |
 | `/sl tooltip` | Toggle tooltip lines |
 | `/sl debug` | Toggle debug output |
 
@@ -62,3 +69,12 @@ Talent data lives in `Data/Shaman.lua`. Logic (`Calc.lua`, `Format.lua`) is pure
 7. Hover a talent: `Now` and `Next point` lines appear once (not duplicated).
 8. Spend a point: panel and tooltip refresh.
 9. Enter combat: panel dims with `Frozen in combat`; leaving combat refreshes it.
+
+### Druid checklist
+
+1. `/sl talents` on a druid: taken Feral talents listed with correct ranks; `missing` empty.
+2. `/sl form` in caster, Cat, Bear (and Dire Bear) Form: ids map to `nil`, `cat`, `bear`. Report any `form:<id>`.
+3. Cat Form: Strength shows the Heart of the Wild share; Stamina shows a grey `in Bear Form` line.
+4. Bear Form: the reverse; the panel refreshes on shapeshift without reopening the window.
+5. Predatory Strikes: Attack Power part equals 150% of your level at 3/3.
+6. Hover Strength, Stamina, Attack Power, Critical Strike, Dodge and Armor rows: talent lines appear once.
