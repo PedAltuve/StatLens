@@ -1,0 +1,17 @@
+## Interface: 16001
+## Title: StatLens
+## Notes: Explains how your talents change your stats.
+## Author: Pedro Altuve
+## Version: 0.1.0
+## SavedVariables: StatLensDB
+
+Core.lua
+Data/Shaman.lua
+Data/Druid.lua
+Talents.lua
+Stats.lua
+Calc.lua
+Format.lua
+Panel.lua
+Tooltip.lua
+StatTooltip.lua
