@@ -9,6 +9,15 @@ local function find(classData, key)
 	end
 end
 
+-- An effect applies unless it is gated to forms the player is not in.
+local function isActive(e, values)
+	if not e.forms then return true end
+	for _, f in ipairs(e.forms) do
+		if f == values.form then return true end
+	end
+	return false
+end
+
 -- Active stat talents: rank > 0, clamped to maxRank.
 local function active(ranks, classData)
 	local list = {}
@@ -36,17 +45,26 @@ function Calc.Breakdown(values, ranks, classData)
 	local function talentEntry(a)
 		local e = out.talents[a.t.key]
 		if not e then
-			e = { rank = a.rank, contributions = {}, chained = {} }
+			e = { rank = a.rank, contributions = {}, inactive = {}, chained = {} }
 			out.talents[a.t.key] = e
 		end
 		return e
 	end
-	local function add(a, stat, amount, op)
-		local s, e = statEntry(stat), talentEntry(a)
-		s.parts[#s.parts + 1] = { key = a.t.key, name = a.t.name, amount = amount, op = op }
-		s.talentTotal = s.talentTotal + amount
-		e.contributions[stat] = (e.contributions[stat] or 0) + amount
+	-- Inactive (wrong form) parts are listed with a hypothetical amount but never counted.
+	local function add(a, effect, amount, isActiveEffect)
+		local s, e = statEntry(effect.stat), talentEntry(a)
+		s.parts[#s.parts + 1] = {
+			key = a.t.key, name = a.t.name, amount = amount, op = effect.op,
+			forms = effect.forms, inactive = (not isActiveEffect) or nil,
+		}
+		if isActiveEffect then
+			s.talentTotal = s.talentTotal + amount
+			e.contributions[effect.stat] = (e.contributions[effect.stat] or 0) + amount
+		else
+			e.inactive[effect.stat] = (e.inactive[effect.stat] or 0) + amount
+		end
 	end
+	-- Yields (effect, active) for effects of `op` whose target stat has a value.
 	local function effects(a, op)
 		local i = 0
 		return function()
@@ -54,27 +72,30 @@ function Calc.Breakdown(values, ranks, classData)
 				i = i + 1
 				local e = a.t.effects[i]
 				if not e then return end
-				if e.op == op and values[e.stat] ~= nil then return e end
+				if e.op == op and values[e.stat] ~= nil then return e, isActive(e, values) end
 			end
 		end
 	end
 
-	-- a. pct: invert the client total. Several pct talents on one stat share one base.
+	-- a. pct: invert the client total (active only). Several active pct talents share one base.
 	local pctSum, pctAmounts = {}, {}
 	for _, a in ipairs(list) do
-		for e in effects(a, "pct") do
+		for e, on in effects(a, "pct") do
 			local p = e.perRank[a.rank]
-			if p then pctSum[e.stat] = (pctSum[e.stat] or 0) + p end
+			if p and on then pctSum[e.stat] = (pctSum[e.stat] or 0) + p end
 		end
 	end
 	for _, a in ipairs(list) do
-		for e in effects(a, "pct") do
+		for e, on in effects(a, "pct") do
 			local p = e.perRank[a.rank]
-			if p then
+			if p and on then
 				local base = values[e.stat] / (1 + pctSum[e.stat])
 				local amount = base * p
-				add(a, e.stat, amount, "pct")
+				add(a, e, amount, true)
 				pctAmounts[#pctAmounts + 1] = { a = a, stat = e.stat, amount = amount }
+			elseif p then
+				-- The client total excludes this bonus, so it is not inverted.
+				add(a, e, values[e.stat] * p, false)
 			end
 		end
 	end
@@ -82,11 +103,11 @@ function Calc.Breakdown(values, ranks, classData)
 	-- b. fromStat: ratio x total of the source stat.
 	local fromStat = {}
 	for _, a in ipairs(list) do
-		for e in effects(a, "fromStat") do
+		for e, on in effects(a, "fromStat") do
 			local ratio = e.perRank[a.rank]
 			if ratio and values[e.source] ~= nil then
-				add(a, e.stat, ratio * values[e.source], "fromStat")
-				fromStat[#fromStat + 1] = { a = a, target = e.stat, source = e.source, ratio = ratio }
+				add(a, e, ratio * values[e.source], on)
+				if on then fromStat[#fromStat + 1] = { a = a, target = e.stat, source = e.source, ratio = ratio } end
 			end
 		end
 	end
@@ -104,16 +125,24 @@ function Calc.Breakdown(values, ranks, classData)
 
 	-- d. flat
 	for _, a in ipairs(list) do
-		for e in effects(a, "flat") do
+		for e, on in effects(a, "flat") do
 			local amount = e.perRank[a.rank]
-			if amount then add(a, e.stat, amount, "flat") end
+			if amount then add(a, e, amount, on) end
+		end
+	end
+
+	-- d2. perLevel: ratio x character level.
+	for _, a in ipairs(list) do
+		for e, on in effects(a, "perLevel") do
+			local ratio = e.perRank[a.rank]
+			if ratio and values.level ~= nil then add(a, e, ratio * values.level, on) end
 		end
 	end
 
 	-- e. enables: credit the full current total.
 	for _, a in ipairs(list) do
-		for e in effects(a, "enables") do
-			add(a, e.stat, values[e.stat], "enables")
+		for e, on in effects(a, "enables") do
+			add(a, e, values[e.stat], on)
 		end
 	end
 
@@ -126,35 +155,52 @@ function Calc.NextPoint(values, ranks, classData, key)
 	local r = math.min(ranks and ranks[key] or 0, t.maxRank)
 	if r >= t.maxRank then return nil end
 
-	local res = { rank = r, nextRank = r + 1, deltas = {}, chained = {} }
+	local res = { rank = r, nextRank = r + 1, deltas = {}, chained = {}, inactiveDeltas = {}, inactiveForms = {} }
 	local current = active(ranks, classData)
 
 	for _, e in ipairs(t.effects) do
+		local on = isActive(e, values)
+		local into = on and res.deltas or res.inactiveDeltas
+		local function put(amount)
+			if type(amount) == "number" then
+				into[e.stat] = (into[e.stat] or 0) + amount
+			else
+				into[e.stat] = amount
+			end
+			if not on then res.inactiveForms[e.stat] = e.forms end
+		end
+
 		local total = values[e.stat]
 		local cur = r > 0 and e.perRank and e.perRank[r] or 0
 		local nxt = e.perRank and e.perRank[r + 1]
 		if e.op == "enables" then
-			if r == 0 then res.deltas[e.stat] = "enables" end
+			if r == 0 then put("enables") end
 		elseif total ~= nil and nxt then
 			if e.op == "pct" then
-				local delta = total / (1 + cur) * (nxt - cur)
-				res.deltas[e.stat] = (res.deltas[e.stat] or 0) + delta
-				for _, a in ipairs(current) do
-					for _, fe in ipairs(a.t.effects) do
-						local ratio = fe.op == "fromStat" and fe.source == e.stat and fe.perRank[a.rank]
-						if ratio and values[fe.stat] ~= nil then
-							local amount = ratio * delta
-							res.deltas[fe.stat] = (res.deltas[fe.stat] or 0) + amount
-							res.chained[fe.stat] = res.chained[fe.stat] or {}
-							table.insert(res.chained[fe.stat], { via = a.t.key, amount = amount })
+				if on then
+					local delta = total / (1 + cur) * (nxt - cur)
+					put(delta)
+					for _, a in ipairs(current) do
+						for _, fe in ipairs(a.t.effects) do
+							local ratio = fe.op == "fromStat" and fe.source == e.stat and isActive(fe, values) and fe.perRank[a.rank]
+							if ratio and values[fe.stat] ~= nil then
+								local amount = ratio * delta
+								res.deltas[fe.stat] = (res.deltas[fe.stat] or 0) + amount
+								res.chained[fe.stat] = res.chained[fe.stat] or {}
+								table.insert(res.chained[fe.stat], { via = a.t.key, amount = amount })
+							end
 						end
 					end
+				else
+					put(total * (nxt - cur))
 				end
 			elseif e.op == "fromStat" then
 				local src = values[e.source]
-				if src ~= nil then res.deltas[e.stat] = (res.deltas[e.stat] or 0) + src * (nxt - cur) end
+				if src ~= nil then put(src * (nxt - cur)) end
 			elseif e.op == "flat" then
-				res.deltas[e.stat] = (res.deltas[e.stat] or 0) + (nxt - cur)
+				put(nxt - cur)
+			elseif e.op == "perLevel" then
+				if values.level ~= nil then put((nxt - cur) * values.level) end
 			end
 		end
 	end

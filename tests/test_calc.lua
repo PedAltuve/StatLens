@@ -83,3 +83,119 @@ T.test("NextPoint", function()
 	T.eq(ns.Calc.NextPoint(v, {}, d, "nope"), nil, "unknown")
 	T.eq(ns.Calc.NextPoint(v, {}, d, "spiritWeapons").deltas.parry, "enables")
 end)
+
+-- Form-gated effects, perLevel, heal (synthetic class data)
+local function synth(talents) return { talents = talents } end
+local function T1(key, effects, maxRank)
+	return { key = key, name = key, maxRank = maxRank or 3, kind = "stat", effects = effects, explain = "x" }
+end
+
+T.test("pct with forms: active vs inactive", function()
+	local ns = load()
+	local d = synth({ T1("fp", { { stat = "agi", op = "pct", forms = { "cat" }, perRank = { 0.03, 0.06, 0.09 } } }) })
+	local b = ns.Calc.Breakdown({ agi = 200, form = "cat" }, { fp = 3 }, d)
+	T.near(b.stats.agi.parts[1].amount, 200 - 200 / 1.09, 1e-9, "active inverted")
+	T.near(b.stats.agi.talentTotal, 200 - 200 / 1.09, 1e-9)
+	T.eq(b.stats.agi.parts[1].inactive, nil); T.eq(b.stats.agi.parts[1].forms[1], "cat")
+
+	b = ns.Calc.Breakdown({ agi = 200, form = "bear" }, { fp = 3 }, d)
+	local p = b.stats.agi.parts[1]
+	T.eq(p.inactive, true); T.near(p.amount, 18, 1e-9, "total x p, not inverted")
+	T.eq(p.forms[1], "cat")
+	T.eq(b.stats.agi.talentTotal, 0, "inactive not in talentTotal")
+	T.eq(b.talents.fp.contributions.agi, nil)
+	T.near(b.talents.fp.inactive.agi, 18, 1e-9)
+end)
+
+T.test("shared pct base only over active effects", function()
+	local ns = load()
+	local d = synth({
+		T1("a", { { stat = "stam", op = "pct", perRank = { 0.05, 0.10, 0.15 } } }),
+		T1("b", { { stat = "stam", op = "pct", forms = { "cat" }, perRank = { 0.1, 0.2, 0.3 } } }),
+	})
+	local b = ns.Calc.Breakdown({ stam = 105, form = "bear" }, { a = 1, b = 1 }, d)
+	T.near(b.talents.a.contributions.stam, 5, 1e-9, "base 105/1.05")
+	T.near(b.talents.b.inactive.stam, 10.5, 1e-9)
+	T.near(b.stats.stam.talentTotal, 5, 1e-9)
+end)
+
+T.test("perLevel active and inactive", function()
+	local ns = load()
+	local d = synth({ T1("pl", { { stat = "ap", op = "perLevel", forms = { "cat" }, perRank = { 0.5, 1.0, 1.5 } } }) })
+	local b = ns.Calc.Breakdown({ ap = 100, level = 25, form = "cat" }, { pl = 3 }, d)
+	T.near(b.stats.ap.parts[1].amount, 37.5, 1e-9); T.near(b.stats.ap.talentTotal, 37.5, 1e-9)
+	T.eq(b.stats.ap.parts[1].op, "perLevel")
+
+	b = ns.Calc.Breakdown({ ap = 100, level = 25 }, { pl = 3 }, d)
+	T.eq(b.stats.ap.parts[1].inactive, true); T.near(b.stats.ap.parts[1].amount, 37.5, 1e-9)
+	T.eq(b.stats.ap.talentTotal, 0)
+
+	b = ns.Calc.Breakdown({ ap = 100, form = "cat" }, { pl = 3 }, d)
+	T.eq(b.stats.ap, nil, "no level -> skipped")
+end)
+
+T.test("flat with forms", function()
+	local ns = load()
+	local d = synth({ T1("fc", { { stat = "meleeCrit", op = "flat", forms = { "cat" }, perRank = { 1, 2, 3 } } }) })
+	local b = ns.Calc.Breakdown({ meleeCrit = 10, form = "cat" }, { fc = 2 }, d)
+	T.eq(b.talents.fc.contributions.meleeCrit, 2); T.eq(b.stats.meleeCrit.talentTotal, 2)
+	b = ns.Calc.Breakdown({ meleeCrit = 10, form = "bear" }, { fc = 2 }, d)
+	T.eq(b.talents.fc.inactive.meleeCrit, 2); T.eq(b.stats.meleeCrit.talentTotal, 0)
+	T.eq(b.talents.fc.contributions.meleeCrit, nil)
+end)
+
+T.test("inactive fromStat and inactive pct do not chain", function()
+	local ns = load()
+	local d = synth({
+		T1("pct", { { stat = "int", op = "pct", perRank = { 0.1, 0.2, 0.3 } } }),
+		T1("src", { { stat = "ap", op = "fromStat", source = "int", forms = { "cat" }, perRank = { 0.5, 1, 1.5 } } }),
+	})
+	local b = ns.Calc.Breakdown({ int = 110, ap = 50, form = "cat" }, { pct = 1, src = 2 }, d)
+	T.eq(#b.talents.pct.chained.ap, 1, "active chain")
+	b = ns.Calc.Breakdown({ int = 110, ap = 50, form = "bear" }, { pct = 1, src = 2 }, d)
+	T.eq(b.talents.pct.chained.ap, nil, "inactive fromStat: no chain")
+	T.eq(b.talents.src.inactive.ap, 110, "hypothetical ratio x source")
+	T.eq(b.stats.ap.talentTotal, 0)
+
+	d = synth({
+		T1("pct", { { stat = "int", op = "pct", forms = { "cat" }, perRank = { 0.1, 0.2, 0.3 } } }),
+		T1("src", { { stat = "ap", op = "fromStat", source = "int", perRank = { 0.5, 1, 1.5 } } }),
+	})
+	b = ns.Calc.Breakdown({ int = 110, ap = 50, form = "bear" }, { pct = 1, src = 2 }, d)
+	T.eq(b.talents.pct.chained.ap, nil, "inactive pct: no chain")
+end)
+
+T.test("NextPoint inactiveDeltas and perLevel", function()
+	local ns = load()
+	local d = synth({
+		T1("fp", { { stat = "agi", op = "pct", forms = { "cat" }, perRank = { 0.03, 0.06, 0.09 } } }),
+		T1("pl", { { stat = "ap", op = "perLevel", perRank = { 0.5, 1.0, 1.5 } } }),
+		T1("fl", { { stat = "meleeCrit", op = "flat", forms = { "cat" }, perRank = { 1, 2, 3 } } }),
+	})
+	local v = { agi = 200, ap = 100, meleeCrit = 10, level = 25, form = "bear" }
+	local n = ns.Calc.NextPoint(v, { fp = 1 }, d, "fp")
+	T.near(n.inactiveDeltas.agi, 6, 1e-9, "total x (p2-p1)")
+	T.eq(n.deltas.agi, nil); T.eq(n.inactiveForms.agi[1], "cat")
+	v.form = "cat"
+	n = ns.Calc.NextPoint(v, { fp = 1 }, d, "fp")
+	T.near(n.deltas.agi, 200 / 1.03 * 0.03, 1e-9, "active as before"); T.eq(n.inactiveDeltas.agi, nil)
+	n = ns.Calc.NextPoint(v, { pl = 1 }, d, "pl")
+	T.near(n.deltas.ap, 12.5, 1e-9, "perLevel delta x level")
+	v.form = nil
+	n = ns.Calc.NextPoint(v, { fl = 0 }, d, "fl")
+	T.eq(n.inactiveDeltas.meleeCrit, 1); T.eq(n.deltas.meleeCrit, nil)
+end)
+
+T.test("Mental Quickness feeds heal and AK chains into it", function()
+	local ns, d = load()
+	local b = ns.Calc.Breakdown(vals({ heal = 250 }), { ancestralKnowledge = 5, mentalQuickness = 2 }, d)
+	T.near(part(b, "heal", "mentalQuickness").amount, 102.3, 1e-9)
+	T.near(part(b, "sp", "mentalQuickness").amount, 102.3, 1e-9)
+	local found
+	for _, link in ipairs(b.talents.ancestralKnowledge.chained.heal or {}) do
+		if link.via == "mentalQuickness" then found = link.amount end
+	end
+	T.near(found, 9.3, 0.05, "AK chained heal")
+	b = ns.Calc.Breakdown(vals(), { mentalQuickness = 2 }, d)
+	T.eq(b.stats.heal, nil, "heal missing -> skipped")
+end)

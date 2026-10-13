@@ -76,8 +76,11 @@ ns.Data.SHAMAN = {
 		},
 		{
 			key = "mentalQuickness", name = "Mental Quickness", maxRank = 2, kind = "stat",
-			effects = { { stat = "sp", op = "fromStat", source = "int", perRank = { 0.15, 0.30 } } },
-			explain = "Grants spell power equal to 15% per rank of your Intellect.",
+			effects = {
+				{ stat = "sp", op = "fromStat", source = "int", perRank = { 0.15, 0.30 } },
+				{ stat = "heal", op = "fromStat", source = "int", perRank = { 0.15, 0.30 } },
+			},
+			explain = "Grants spell damage and healing equal to 15% per rank of your Intellect.",
 		},
 		{
 			key = "improvedStormstrike", name = "Improved Stormstrike", maxRank = 2, kind = "conditional",

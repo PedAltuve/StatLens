@@ -3,10 +3,10 @@ local ADDON, ns = ...
 local Format = {}
 ns.Format = Format
 
-local ORDER = { "int", "stam", "agi", "str", "ap", "sp", "meleeCrit", "spellCrit", "dodge", "parry" }
+local ORDER = { "int", "stam", "agi", "str", "ap", "sp", "heal", "meleeCrit", "spellCrit", "dodge", "parry", "armor" }
 local LABELS = {
 	int = "Intellect", stam = "Stamina", agi = "Agility", str = "Strength", ap = "Attack Power",
-	sp = "Spell Power", meleeCrit = "Melee Crit", spellCrit = "Spell Crit", dodge = "Dodge", parry = "Parry",
+	sp = "Spell Power", heal = "Spell Healing", armor = "Armor", meleeCrit = "Melee Crit", spellCrit = "Spell Crit", dodge = "Dodge", parry = "Parry",
 }
 local PERCENT = { meleeCrit = true, spellCrit = true, dodge = true, parry = true }
 

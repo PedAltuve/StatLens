@@ -50,3 +50,48 @@ T.test("Stats.Read missing/throwing API leaves nil", function()
 	T.eq(r.values.parry, nil); T.eq(r.values.dodge, nil)
 	T.eq(r.values.str, 201)
 end)
+
+T.test("Stats.Read level, heal, armor", function()
+	local ns = load()
+	fullApi()
+	_G.UnitLevel = function() return 25 end
+	_G.GetSpellBonusHealing = function() return 88 end
+	_G.UnitArmor = function() return 500, 640, 0, 0 end
+	local v = ns.Stats.Read().values
+	T.eq(v.level, 25); T.eq(v.heal, 88); T.eq(v.armor, 640, "effective armor")
+end)
+
+T.test("Stats.Read form mapping", function()
+	local ns = load()
+	fullApi()
+	local id
+	_G.GetShapeshiftFormID = function() return id end
+	local cases = { { 1, "cat" }, { 5, "bear" }, { 8, "bear" }, { 31, "moonkin" }, { 99, "form:99" } }
+	for _, c in ipairs(cases) do
+		id = c[1]
+		T.eq(ns.Stats.Read().values.form, c[2], "form " .. c[1])
+		T.eq(ns.Stats.formID, c[1], "raw formID")
+	end
+	id = nil
+	T.eq(ns.Stats.Read().values.form, nil, "nil id"); T.eq(ns.Stats.formID, nil)
+	id = 0
+	T.eq(ns.Stats.Read().values.form, nil, "0 id")
+	T.eq(ns.Stats.FORMS[8], "bear")
+end)
+
+T.test("Stats.Read new values missing API -> nil, no error", function()
+	local ns = load()
+	fullApi()
+	local ok, r = pcall(ns.Stats.Read)
+	T.truthy(ok and r.ok)
+	T.eq(r.values.level, nil); T.eq(r.values.heal, nil); T.eq(r.values.armor, nil); T.eq(r.values.form, nil)
+end)
+
+T.test("Stats.Read secret form id", function()
+	local ns = load()
+	fullApi()
+	_G.GetShapeshiftFormID = function() return 1 end
+	_G.issecretvalue = function(v) return v == 1 end
+	local r = ns.Stats.Read()
+	T.eq(r.secret, true); T.eq(r.ok, false)
+end)

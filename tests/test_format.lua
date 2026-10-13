@@ -156,3 +156,19 @@ T.test("StatTooltipLines", function()
 	T.eq(#L("stam"), 0, "nothing applies")
 	T.eq(#L("str"), 0)
 end)
+
+T.test("heal and armor labels and order", function()
+	local ns, d = load()
+	local ranks = { mentalQuickness = 2 }
+	local v = { int = 100, sp = 50, heal = 60 }
+	local lines = ns.Format.Lines(ns.Calc.Breakdown(v, ranks, d), ranks, d)
+	local sp, heal
+	for i, l in ipairs(lines) do
+		if l.text:find("^Spell Power") then sp = i end
+		if l.text:find("^Spell Healing") then heal = i end
+	end
+	T.truthy(sp and heal and heal > sp, "Spell Healing after Spell Power")
+	local tt = ns.Format.StatTooltipLines("int", ns.Calc.Breakdown(v, ranks, d), d, ranks)
+	local joined = table.concat(tt, "\n")
+	T.truthy(joined:find("Spell Healing", 1, true), "tooltip names heal")
+end)

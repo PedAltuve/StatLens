@@ -3,6 +3,9 @@ local ADDON, ns = ...
 local Stats = {}
 ns.Stats = Stats
 
+-- GetShapeshiftFormID -> short form name used by `forms` in talent data.
+Stats.FORMS = { [1] = "cat", [5] = "bear", [8] = "bear", [31] = "moonkin" }
+
 -- Call fn(...) under pcall; return all results, or nothing on error / missing API.
 local function try(fn, ...)
 	if type(fn) ~= "function" then return end
@@ -42,6 +45,18 @@ local function readValues()
 	v.spellCrit = try(GetSpellCritChance, 4)
 	v.dodge = try(GetDodgeChance)
 	v.parry = try(GetParryChance)
+
+	v.level = try(UnitLevel, "player")
+	v.heal = try(GetSpellBonusHealing)
+	local _, armor = try(UnitArmor, "player")
+	v.armor = armor
+
+	local formID = try(GetShapeshiftFormID)
+	Stats.formID = formID
+	if formID ~= nil and (ns.IsSecret(formID) or formID ~= 0) then
+		-- A secret id is kept raw so Read() can flag it; never build strings from it.
+		v.form = ns.IsSecret(formID) and formID or Stats.FORMS[formID] or ("form:" .. tostring(formID))
+	end
 	return v
 end
 
