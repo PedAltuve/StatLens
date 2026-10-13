@@ -10,3 +10,5 @@ Data/Shaman.lua
 Talents.lua
 Stats.lua
 Calc.lua
+Format.lua
+Panel.lua

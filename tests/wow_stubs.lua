@@ -1,8 +1,21 @@
 -- Minimal WoW API stubs. Call S.reset() before each test for a clean slate.
 local S = { frames = {}, failRegister = {}, chat = {} }
 
+-- Unknown methods (SetSize, SetPoint, ...) are harmless no-ops returning nil.
+local lenient = { __index = function() return function() end end }
+
+local function newFontString()
+	local fs = setmetatable({}, lenient)
+	function fs:SetText(t) self.text = t end
+	function fs:GetText() return self.text end
+	function fs:SetTextColor(r, g, b, a) self.color = { r, g, b, a } end
+	return fs
+end
+
 local function newFrame()
-	local f = { events = {}, scripts = {}, shown = false }
+	local f = setmetatable({ events = {}, scripts = {}, shown = false }, lenient)
+	function f:IsShown() return self.shown end
+	function f:CreateFontString() return newFontString() end
 	function f:RegisterEvent(e)
 		if S.failRegister[e] then error("unknown event " .. e) end
 		self.events[e] = true
@@ -47,6 +60,10 @@ function S.reset()
 	_G.C_Traits, _G.C_ClassTalents, _G.C_Spell = nil, nil, nil
 	for _, n in ipairs({ "UnitStat", "UnitAttackPower", "GetSpellBonusDamage", "GetCritChance",
 		"GetSpellCritChance", "GetDodgeChance", "GetParryChance" }) do _G[n] = nil end
+	_G.C_Timer = { After = function(_, fn) fn() end }
+	_G.InCombatLockdown = function() return false end
+	_G.UIParent = newFrame()
+	_G.CharacterFrame = nil
 	_G.UnitClass = function() return "Shaman", "SHAMAN" end
 	for k in pairs(_G) do
 		if type(k) == "string" and k:match("^SLASH_") then _G[k] = nil end
