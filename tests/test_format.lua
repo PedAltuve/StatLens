@@ -73,3 +73,54 @@ T.test("empty case", function()
 	T.eq(#lines, 1)
 	T.eq(lines[1].text, "No stat talents taken yet."); T.eq(lines[1].kind, "note")
 end)
+
+-- TooltipLines
+local function tip(key, rank, vals)
+	local ns, d = load()
+	local ranks = { ancestralKnowledge = 2, mentalDexterity = 3, mentalQuickness = 0 }
+	ranks[key] = rank
+	local b = ns.Calc.Breakdown(vals or values, ranks, d)
+	local np = ns.Calc.NextPoint(vals or values, ranks, d, key)
+	local entry
+	for _, t in ipairs(d.talents) do if t.key == key then entry = t end end
+	return ns.Format.TooltipLines(entry, rank, b, np)
+end
+
+T.test("TooltipLines AK 2/5 with next point and chain", function()
+	local lines = tip("ancestralKnowledge", 2)
+	local t = texts(lines)
+	T.eq(t[1], "StatLens"); T.near(lines[1].r, 1, 1e-9); T.near(lines[1].g, 0.82, 1e-9)
+	T.eq(t[2], "Now: +13 Intellect")
+	T.eq(t[3], "  incl. +13 Attack Power via Mental Dexterity")
+	T.eq(t[4], "Next point (3/5): +7 Intellect")
+	T.eq(t[5], "  incl. +7 Attack Power via Mental Dexterity")
+	T.eq(#t, 5)
+end)
+
+T.test("TooltipLines maxed, inferred, enables, flat", function()
+	local t = texts(tip("mentalDexterity", 3))
+	T.eq(t[#t], "Maxed")
+	t = texts(tip("mentalDexterity", 1))
+	T.truthy(t[#t - 0]:find("(value inferred)", 1, true) or t[#t - 1]:find("(value inferred)", 1, true), "inferred marker")
+	T.truthy(t[2]:find("^Now: %+%d+ Attack Power"))
+	t = texts(tip("spiritWeapons", 0))
+	T.eq(t[2], "Next point (1/1): enables Parry")
+	t = texts(tip("spiritWeapons", 1))
+	T.eq(t[2], "Now: enables Parry"); T.eq(t[3], "Maxed")
+	t = texts(tip("thunderingStrikes", 2))
+	T.eq(t[2], "Now: +2.0% Melee Crit"); T.eq(t[3], "Now: +2.0% Spell Crit")
+	T.eq(t[4], "Next point (3/5): +1.0% Melee Crit")
+end)
+
+T.test("TooltipLines conditional and utility", function()
+	local ns, d = load()
+	local flurry, eg
+	for _, t in ipairs(d.talents) do
+		if t.key == "flurry" then flurry = t elseif t.key == "earthsGrasp" then eg = t end
+	end
+	local l = ns.Format.TooltipLines(flurry, 2, { stats = {}, talents = {} }, nil)
+	T.eq(l[2].text, "Not shown on character sheet: " .. flurry.explain)
+	T.near(l[2].r, 0.6, 1e-9)
+	l = ns.Format.TooltipLines(eg, 0, { stats = {}, talents = {} }, nil)
+	T.eq(l[2].text, "No stat effect.")
+end)

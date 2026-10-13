@@ -90,3 +90,76 @@ function Format.Lines(breakdown, ranks, classData)
 	if inferred then add("* rank value inferred, verify in game", 0, "note") end
 	return lines
 end
+
+local GOLD, GREY, GREEN = { 1, 0.82, 0 }, { 0.6, 0.6, 0.6 }, { 0.6, 1, 0.6 }
+
+local function partName(breakdown, stat, key)
+	local s = breakdown and breakdown.stats and breakdown.stats[stat]
+	for _, p in ipairs(s and s.parts or {}) do
+		if p.key == key then return p.name end
+	end
+	return key
+end
+
+local function isEnables(entry, stat)
+	for _, e in ipairs(entry.effects or {}) do
+		if e.stat == stat and e.op == "enables" then return true end
+	end
+end
+
+function Format.TooltipLines(entry, rank, breakdown, nextPoint)
+	local lines = {}
+	local function add(text, c) lines[#lines + 1] = { text = text, r = c[1], g = c[2], b = c[3] } end
+	add("StatLens", GOLD)
+
+	if entry.kind == "conditional" then
+		add("Not shown on character sheet: " .. entry.explain, GREY)
+	elseif entry.kind == "utility" then
+		add("No stat effect.", GREY)
+	elseif entry.kind == "stat" then
+		local function chain(map)
+			for _, stat in ipairs(ORDER) do
+				for _, link in ipairs(map and map[stat] or {}) do
+					add(("  incl. +%s %s via %s"):format(num(stat, link.amount), LABELS[stat], partName(breakdown, stat, link.via)), GREEN)
+				end
+			end
+		end
+
+		local now = rank > 0 and breakdown and breakdown.talents and breakdown.talents[entry.key]
+		if now then
+			for _, stat in ipairs(ORDER) do
+				local amount = now.contributions[stat]
+				if amount then
+					if isEnables(entry, stat) then
+						add("Now: enables " .. LABELS[stat], GREEN)
+					else
+						add(("Now: +%s %s"):format(num(stat, amount), LABELS[stat]), GREEN)
+					end
+				end
+			end
+			chain(now.chained)
+		end
+
+		if nextPoint then
+			local mark = entry.inferred and " (value inferred)" or ""
+			for _, stat in ipairs(ORDER) do
+				local delta = nextPoint.deltas[stat]
+				if type(delta) == "number" then
+					for _, link in ipairs(nextPoint.chained and nextPoint.chained[stat] or {}) do
+						delta = delta - link.amount
+					end
+					if math.abs(delta) < 0.05 then delta = nil end
+				end
+				if delta == "enables" then
+					add(("Next point (%d/%d): enables %s%s"):format(nextPoint.nextRank, entry.maxRank, LABELS[stat], mark), GREEN)
+				elseif delta then
+					add(("Next point (%d/%d): +%s %s%s"):format(nextPoint.nextRank, entry.maxRank, num(stat, delta), LABELS[stat], mark), GREEN)
+				end
+			end
+			chain(nextPoint.chained)
+		elseif rank >= entry.maxRank then
+			add("Maxed", GREY)
+		end
+	end
+	return lines
+end

@@ -39,6 +39,7 @@ ns.On("ADDON_LOADED", function(name)
 	StatLensDB = StatLensDB or {}
 	if StatLensDB.debug == nil then StatLensDB.debug = false end
 	if StatLensDB.panelShown == nil then StatLensDB.panelShown = true end
+	if StatLensDB.tooltip == nil then StatLensDB.tooltip = true end
 end)
 
 ns.commands.help = function()
