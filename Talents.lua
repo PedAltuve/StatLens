@@ -107,7 +107,10 @@ end
 
 function Talents.Refresh()
 	local result = Talents.Read()
-	for i = 1, #callbacks do callbacks[i](result) end
+	for i = 1, #callbacks do
+		local ok, err = pcall(callbacks[i], result)
+		if not ok and StatLensDB and StatLensDB.debug then ns.Print("OnChange error: " .. tostring(err)) end
+	end
 	return result
 end
 

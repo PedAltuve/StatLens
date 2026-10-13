@@ -45,6 +45,8 @@ function S.reset()
 	_G.DEFAULT_CHAT_FRAME = { AddMessage = function(_, msg) S.chat[#S.chat + 1] = msg end }
 	_G.StatLensDB = nil
 	_G.C_Traits, _G.C_ClassTalents, _G.C_Spell = nil, nil, nil
+	for _, n in ipairs({ "UnitStat", "UnitAttackPower", "GetSpellBonusDamage", "GetCritChance",
+		"GetSpellCritChance", "GetDodgeChance", "GetParryChance" }) do _G[n] = nil end
 	_G.UnitClass = function() return "Shaman", "SHAMAN" end
 	for k in pairs(_G) do
 		if type(k) == "string" and k:match("^SLASH_") then _G[k] = nil end
