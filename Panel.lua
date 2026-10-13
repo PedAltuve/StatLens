@@ -13,6 +13,57 @@ local lastLines, pending, warned
 
 local function enabled() return not StatLensDB or StatLensDB.panelShown ~= false end
 
+local MARGIN = 6
+
+local function call(obj, method, ...)
+	local ok, a = pcall(function(...) return obj[method](obj, ...) end, ...)
+	if ok then return a end
+end
+
+-- Right edge of a frame in `frame`'s coordinate space, or nil before layout.
+local function rightIn(child, frameScale)
+	local right = call(child, "GetRight")
+	if type(right) ~= "number" then return nil end
+	local scale = call(child, "GetEffectiveScale")
+	if type(scale) == "number" and type(frameScale) == "number" and frameScale > 0 then
+		right = right * scale / frameScale
+	end
+	return right
+end
+
+-- Offset from frame's right edge that clears shown children (and grandchildren), e.g. side tabs.
+function Panel.ComputeOffset(frame, panel)
+	if not frame then return MARGIN end
+	local frameRight = call(frame, "GetRight")
+	if type(frameRight) ~= "number" then return MARGIN end
+	local frameScale = call(frame, "GetEffectiveScale")
+	local maxRight = frameRight
+
+	local function visit(parent, depth)
+		local ok, kids = pcall(function() return { parent:GetChildren() } end)
+		if not ok then return end
+		for _, child in ipairs(kids) do
+			if child ~= panel and call(child, "IsShown") then
+				local r = rightIn(child, frameScale)
+				if r and r > maxRight then maxRight = r end
+				if depth < 2 then visit(child, depth + 1) end
+			end
+		end
+	end
+	visit(frame, 1)
+	return math.max(0, maxRight - frameRight) + MARGIN
+end
+
+local function anchor()
+	local f = Panel.frame
+	if not f or not CharacterFrame then return end
+	local x = StatLensDB and StatLensDB.panelOffsetX or Panel.ComputeOffset(CharacterFrame, f)
+	Panel.currentOffset = x
+	f:ClearAllPoints()
+	f:SetPoint("TOPLEFT", CharacterFrame, "TOPRIGHT", x, 0)
+end
+Panel.Anchor = anchor
+
 local function ensureFrame()
 	if Panel.frame then return Panel.frame end
 	if not CharacterFrame then
@@ -25,7 +76,6 @@ local function ensureFrame()
 	local ok, f = pcall(CreateFrame, "Frame", "StatLensPanel", CharacterFrame, "BackdropTemplate")
 	if not ok or not f then f = CreateFrame("Frame", "StatLensPanel", CharacterFrame) end
 	f:SetWidth(WIDTH)
-	f:SetPoint("TOPLEFT", CharacterFrame, "TOPRIGHT", 4, 0)
 	if f.SetBackdrop then
 		f:SetBackdrop({
 			bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
@@ -39,9 +89,10 @@ local function ensureFrame()
 	title:SetText("StatLens")
 	f:Hide()
 	Panel.frame = f
+	anchor()
 
 	CharacterFrame:HookScript("OnShow", function()
-		if enabled() then f:Show() Panel.Refresh() end
+		if enabled() then anchor() f:Show() Panel.Refresh() end
 	end)
 	CharacterFrame:HookScript("OnHide", function() f:Hide() end)
 	if CharacterFrame:IsShown() and enabled() then f:Show() end
@@ -51,6 +102,7 @@ end
 local function render(lines, dim)
 	local f = ensureFrame()
 	if not f then return end
+	anchor()
 	local alpha = dim and 0.5 or 1
 	local y = PAD + TITLE_H
 	for i, line in ipairs(lines) do
@@ -136,4 +188,17 @@ ns.commands.panel = function()
 		f:Hide()
 	end
 	ns.Print("panel " .. (StatLensDB.panelShown and "on" or "off"))
+end
+
+ns.commands.offset = function(args)
+	StatLensDB = StatLensDB or {}
+	if args == "auto" then
+		StatLensDB.panelOffsetX = nil
+	elseif tonumber(args) then
+		StatLensDB.panelOffsetX = tonumber(args)
+	else
+		return ns.Print("usage: offset <number>|auto")
+	end
+	anchor()
+	ns.Print("panel offset " .. (StatLensDB.panelOffsetX and tostring(StatLensDB.panelOffsetX) or "auto"))
 end

@@ -58,3 +58,41 @@ T.test("/sl panel toggles the saved flag", function()
 	T.eq(StatLensDB.panelShown, true)
 	T.eq(ns.Panel.frame.shown, true, "shown immediately")
 end)
+
+-- ComputeOffset
+local function box(right, scale, shown, children)
+	return {
+		GetRight = function() return right end,
+		GetEffectiveScale = function() return scale or 1 end,
+		IsShown = function() return shown ~= false end,
+		GetChildren = function() return unpack(children or {}) end,
+	}
+end
+
+T.test("ComputeOffset", function()
+	local ns = load(false)
+	local C = ns.Panel.ComputeOffset
+	local panel = box(900)
+	T.eq(C(box(500, 1, true, {}), panel), 6, "no children")
+	T.eq(C(box(500, 1, true, { box(545) }), panel), 51, "tab column sticks out 45")
+	T.eq(C(box(500, 1, true, { box(nil), box(480) }), panel), 6, "nil GetRight ignored, inside frame")
+	T.eq(C(box(500, 1, true, { box(700, 1, false) }), panel), 6, "hidden ignored")
+	T.eq(C(box(500, 1, true, { panel }), panel), 6, "panel excluded")
+	T.eq(C(box(500, 1, true, { box(10, 1, true, { box(530) }) }), panel), 36, "nested child")
+	T.eq(C(box(500, 1, true, { box(300, 2) }), panel), 106, "scale conversion 300*2/1=600")
+	T.eq(C(nil, panel), 6, "nil frame")
+end)
+
+T.test("/sl offset override", function()
+	local ns = load(true)
+	S.fire("ADDON_LOADED", "StatLens")
+	S.fire("PLAYER_LOGIN")
+	SlashCmdList.STATLENS("offset 20")
+	T.eq(StatLensDB.panelOffsetX, 20)
+	T.eq(ns.Panel.currentOffset, 20, "applied")
+	SlashCmdList.STATLENS("offset auto")
+	T.eq(StatLensDB.panelOffsetX, nil)
+	T.eq(ns.Panel.currentOffset, 6, "auto again")
+	SlashCmdList.STATLENS("offset zzz")
+	T.eq(StatLensDB.panelOffsetX, nil, "invalid ignored")
+end)
