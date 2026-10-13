@@ -13,6 +13,11 @@ local function try(fn, ...)
 	if res[1] then return unpack(res, 2) end
 end
 
+local function formName(id)
+	if id == nil or id == 0 then return nil end
+	return Stats.FORMS[id] or ("form:" .. tostring(id))
+end
+
 local function readValues()
 	local v = {}
 	local names = { "str", "agi", "stam", "int" }
@@ -53,9 +58,11 @@ local function readValues()
 
 	local formID = try(GetShapeshiftFormID)
 	Stats.formID = formID
-	if formID ~= nil and (ns.IsSecret(formID) or formID ~= 0) then
-		-- A secret id is kept raw so Read() can flag it; never build strings from it.
-		v.form = ns.IsSecret(formID) and formID or Stats.FORMS[formID] or ("form:" .. tostring(formID))
+	if ns.IsSecret(formID) then
+		-- Kept raw so Read() can flag it; never build strings from it.
+		v.form = formID
+	else
+		v.form = formName(formID)
 	end
 	return v
 end
@@ -68,4 +75,11 @@ function Stats.Read()
 		end
 	end
 	return { ok = true, secret = false, values = values }
+end
+
+-- In-game validation: shows what the client reports and how we map it.
+ns.commands.form = function()
+	local id = try(GetShapeshiftFormID)
+	if ns.IsSecret(id) then return ns.Print("form id: <secret>") end
+	ns.Print(("form id: %s -> %s"):format(id == nil and "none" or tostring(id), formName(id) or "none"))
 end

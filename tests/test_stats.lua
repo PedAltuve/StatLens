@@ -95,3 +95,19 @@ T.test("Stats.Read secret form id", function()
 	local r = ns.Stats.Read()
 	T.eq(r.secret, true); T.eq(r.ok, false)
 end)
+
+T.test("/sl form prints raw id and mapped name", function()
+	local ns = load()
+	_G.GetShapeshiftFormID = function() return 8 end
+	SlashCmdList.STATLENS("form")
+	local all = table.concat(S.chat, "\n")
+	T.truthy(all:find("8", 1, true) and all:find("bear", 1, true), "raw + mapped")
+	S.chat = {}
+	_G.GetShapeshiftFormID = function() return nil end
+	SlashCmdList.STATLENS("form")
+	T.truthy(table.concat(S.chat, "\n"):find("none", 1, true), "no form")
+	S.chat = {}
+	_G.GetShapeshiftFormID = nil
+	SlashCmdList.STATLENS("form")
+	T.truthy(table.concat(S.chat, "\n"):find("form id: none", 1, true), "missing API prints none")
+end)

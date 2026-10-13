@@ -15,9 +15,25 @@ local function num(stat, x)
 	return ("%d"):format(math.floor(x + 0.5))
 end
 
+local FORM_NAMES = { cat = "Cat", bear = "Bear", moonkin = "Moonkin" }
+
+-- {"cat","bear"} -> "Cat or Bear Form"
+local function formText(forms)
+	local names = {}
+	for i, f in ipairs(forms or {}) do names[i] = FORM_NAMES[f] or f end
+	if #names == 0 then return "other forms" end
+	return table.concat(names, " or ") .. " Form"
+end
+
 local function ratioOf(talent, stat, rank)
 	for _, e in ipairs(talent.effects or {}) do
 		if e.stat == stat and e.op == "fromStat" then return e.perRank[rank], e.source end
+	end
+end
+
+local function perLevelOf(talent, stat, rank)
+	for _, e in ipairs(talent.effects or {}) do
+		if e.stat == stat and e.op == "perLevel" then return e.perRank[rank] end
 	end
 end
 
@@ -34,7 +50,7 @@ function Format.Lines(breakdown, ranks, classData)
 		if s and #s.parts > 0 then
 			local total, shown = 0, false
 			for _, p in ipairs(s.parts) do
-				if p.op ~= "enables" then total, shown = total + p.amount, true end
+				if p.op ~= "enables" and not p.inactive then total, shown = total + p.amount, true end
 			end
 			local head = LABELS[stat] .. " " .. num(stat, s.total or 0)
 			if shown then head = head .. " (talents +" .. num(stat, total) .. ")" end
@@ -45,7 +61,11 @@ function Format.Lines(breakdown, ranks, classData)
 				local rank = breakdown.talents[p.key].rank
 				local name = p.name .. (t and t.inferred and "*" or "")
 				if t and t.inferred then inferred = true end
-				if p.op == "enables" then
+				if p.inactive then
+					local text = p.op == "enables" and ("%s: enables %s in %s"):format(name, LABELS[stat], formText(p.forms))
+						or ("%s %d/%d: +%s in %s"):format(name, rank, t and t.maxRank or rank, num(stat, p.amount), formText(p.forms))
+					add(text, 1, "inactive")
+				elseif p.op == "enables" then
 					add(("%s: enables %s (%s)"):format(name, LABELS[stat], num(stat, s.total or 0)), 1, "part")
 				else
 					local text = ("%s %d/%d: +%s"):format(name, rank, t and t.maxRank or rank, num(stat, p.amount))
@@ -53,6 +73,14 @@ function Format.Lines(breakdown, ranks, classData)
 					if p.op == "fromStat" and t then ratio, source = ratioOf(t, stat, rank) end
 					if ratio then
 						text = text .. (" (%d%% of %s)"):format(math.floor(ratio * 100 + 0.5), LABELS[source])
+					end
+					if p.op == "perLevel" and t then
+						local per = perLevelOf(t, stat, rank)
+						if per and stat == "armor" then
+							text = text .. (" (%g per level)"):format(per)
+						elseif per then
+							text = text .. (" (%d%% of level)"):format(math.floor(per * 100 + 0.5))
+						end
 					end
 					add(text, 1, "part")
 					if p.op == "fromStat" then
@@ -101,6 +129,13 @@ local function partName(breakdown, stat, key)
 	return key
 end
 
+local function partFormsFor(breakdown, stat, key)
+	local st = breakdown and breakdown.stats and breakdown.stats[stat]
+	for _, p in ipairs(st and st.parts or {}) do
+		if p.key == key and p.inactive then return p.forms end
+	end
+end
+
 local function isEnables(entry, stat)
 	for _, e in ipairs(entry.effects or {}) do
 		if e.stat == stat and e.op == "enables" then return true end
@@ -138,6 +173,12 @@ function Format.TooltipLines(entry, rank, breakdown, nextPoint)
 				end
 			end
 			chain(now.chained)
+			for _, stat in ipairs(ORDER) do
+				local amount = now.inactive and now.inactive[stat]
+				if amount then
+					add(("In %s: +%s %s"):format(formText(partFormsFor(breakdown, stat, entry.key)), num(stat, amount), LABELS[stat]), GREY)
+				end
+			end
 		end
 
 		if nextPoint then
@@ -157,6 +198,16 @@ function Format.TooltipLines(entry, rank, breakdown, nextPoint)
 				end
 			end
 			chain(nextPoint.chained)
+			for _, stat in ipairs(ORDER) do
+				local delta = nextPoint.inactiveDeltas and nextPoint.inactiveDeltas[stat]
+				if delta == "enables" then
+					add(("Next point (%d/%d): enables %s in %s%s"):format(nextPoint.nextRank, entry.maxRank, LABELS[stat],
+						formText(nextPoint.inactiveForms[stat]), mark), GREY)
+				elseif delta then
+					add(("Next point (%d/%d): +%s %s in %s%s"):format(nextPoint.nextRank, entry.maxRank, num(stat, delta),
+						LABELS[stat], formText(nextPoint.inactiveForms[stat]), mark), GREY)
+				end
+			end
 		elseif rank >= entry.maxRank then
 			add("Maxed", GREY)
 		end
@@ -185,7 +236,7 @@ function Format.StatTooltipLines(statKey, breakdown, classData, ranks)
 	-- a. direct pct/flat contributions to this stat
 	for _, p in ipairs(stat and stat.parts or {}) do
 		local t = byKey[p.key]
-		if t and (p.op == "pct" or p.op == "flat") then
+		if t and not p.inactive and (p.op == "pct" or p.op == "flat" or p.op == "perLevel") then
 			out[#out + 1] = ("%sTalents add %s%s+%s%s%s (%s)%s"):format(
 				C_GOLD, C_END, C_WHITE, num(statKey, p.amount), C_END, C_GREY, tag(t, rankOf(t)), C_END)
 		end
@@ -207,7 +258,7 @@ function Format.StatTooltipLines(statKey, breakdown, classData, ranks)
 	-- c. this stat receives from a fromStat talent, plus the chained shares
 	for _, p in ipairs(stat and stat.parts or {}) do
 		local t = byKey[p.key]
-		if t and p.op == "fromStat" then
+		if t and not p.inactive and p.op == "fromStat" then
 			local source
 			for _, eff in ipairs(t.effects) do
 				if eff.stat == statKey and eff.op == "fromStat" then source = eff.source end
@@ -229,8 +280,15 @@ function Format.StatTooltipLines(statKey, breakdown, classData, ranks)
 	-- d. this stat only exists because of a talent
 	for _, p in ipairs(stat and stat.parts or {}) do
 		local t = byKey[p.key]
-		if t and p.op == "enables" then
+		if t and not p.inactive and p.op == "enables" then
 			out[#out + 1] = ("%sEnabled by %s%s%s%s"):format(C_GOLD, C_END, C_WHITE, t.name .. (t.inferred and "*" or ""), C_END)
+		end
+	end
+	-- e. bonuses that only apply in other forms
+	for _, p in ipairs(stat and stat.parts or {}) do
+		local t = byKey[p.key]
+		if t and p.inactive then
+			out[#out + 1] = ("%sIn %s: +%s (%s)%s"):format(C_GREY, formText(p.forms), num(statKey, p.amount), tag(t, rankOf(t)), C_END)
 		end
 	end
 	return out

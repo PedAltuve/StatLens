@@ -6,7 +6,7 @@ ns.Panel = Panel
 local WIDTH, PAD, TITLE_H, LINE_H, INDENT = 260, 10, 18, 14, 10
 local COLORS = {
 	header = { 1, 0.82, 0 }, stat = { 1, 1, 1 }, part = { 0.6, 1, 0.6 },
-	chain = { 0.6, 0.6, 0.6 }, note = { 0.6, 0.6, 0.6 },
+	chain = { 0.6, 0.6, 0.6 }, note = { 0.6, 0.6, 0.6 }, inactive = { 0.6, 0.6, 0.6 },
 }
 
 local lastLines, pending, warned
@@ -171,6 +171,7 @@ ns.On("PLAYER_LOGIN", function() ensureFrame() end)
 ns.On("UNIT_STATS", onPlayerUnit)
 ns.On("UNIT_ATTACK_POWER", onPlayerUnit)
 ns.On("UNIT_AURA", onPlayerUnit)
+ns.On("UPDATE_SHAPESHIFT_FORM", Panel.Request)
 ns.On("PLAYER_EQUIPMENT_CHANGED", Panel.Request)
 ns.On("PLAYER_REGEN_DISABLED", function()
 	if Panel.frame and Panel.frame:IsShown() then renderFrozen() end

@@ -96,3 +96,16 @@ T.test("/sl offset override", function()
 	SlashCmdList.STATLENS("offset zzz")
 	T.eq(StatLensDB.panelOffsetX, nil, "invalid ignored")
 end)
+
+T.test("UPDATE_SHAPESHIFT_FORM triggers a refresh", function()
+	local ns = load(true)
+	S.fire("ADDON_LOADED", "StatLens")
+	S.fire("PLAYER_LOGIN")
+	CharacterFrame:Show()
+	CharacterFrame.scripts.OnShow(CharacterFrame)
+	local n = 0
+	local orig = ns.Format.Lines
+	ns.Format.Lines = function(...) n = n + 1 return orig(...) end
+	S.fire("UPDATE_SHAPESHIFT_FORM")
+	T.eq(n, 1, "refreshed")
+end)
