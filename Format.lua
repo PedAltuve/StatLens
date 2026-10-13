@@ -163,3 +163,75 @@ function Format.TooltipLines(entry, rank, breakdown, nextPoint)
 	end
 	return lines
 end
+
+local C_GOLD, C_WHITE, C_GREY, C_END = "|cffffd100", "|cffffffff", "|cff999999", "|r"
+
+local function tag(t, rank)
+	return ("%s%s %d/%d"):format(t.name, t.inferred and "*" or "", rank, t.maxRank)
+end
+
+-- Native-style lines (with color escapes) for a character sheet stat tooltip.
+function Format.StatTooltipLines(statKey, breakdown, classData, ranks)
+	local out = {}
+	local talents = classData and classData.talents or {}
+	local stat = breakdown and breakdown.stats and breakdown.stats[statKey]
+	local function rankOf(t)
+		local e = breakdown and breakdown.talents and breakdown.talents[t.key]
+		return e and e.rank or ranks and ranks[t.key] or 0
+	end
+	local byKey = {}
+	for _, t in ipairs(talents) do byKey[t.key] = t end
+
+	-- a. direct pct/flat contributions to this stat
+	for _, p in ipairs(stat and stat.parts or {}) do
+		local t = byKey[p.key]
+		if t and (p.op == "pct" or p.op == "flat") then
+			out[#out + 1] = ("%sTalents add %s%s+%s%s%s (%s)%s"):format(
+				C_GOLD, C_END, C_WHITE, num(statKey, p.amount), C_END, C_GREY, tag(t, rankOf(t)), C_END)
+		end
+	end
+
+	-- b. this stat feeds another stat through a fromStat talent
+	for _, t in ipairs(talents) do
+		local e = breakdown and breakdown.talents and breakdown.talents[t.key]
+		for _, eff in ipairs(t.kind == "stat" and e and t.effects or {}) do
+			local amount = eff.op == "fromStat" and eff.source == statKey and e.contributions[eff.stat]
+			if amount then
+				out[#out + 1] = ("%sIncreases %s%s%s%s%s by %s%s%s%s%s (%s)%s"):format(
+					C_GOLD, C_END, C_WHITE, LABELS[eff.stat], C_END, C_GOLD, C_END,
+					C_WHITE, num(eff.stat, amount), C_END, C_GREY, tag(t, rankOf(t)), C_END)
+			end
+		end
+	end
+
+	-- c. this stat receives from a fromStat talent, plus the chained shares
+	for _, p in ipairs(stat and stat.parts or {}) do
+		local t = byKey[p.key]
+		if t and p.op == "fromStat" then
+			local source
+			for _, eff in ipairs(t.effects) do
+				if eff.stat == statKey and eff.op == "fromStat" then source = eff.source end
+			end
+			out[#out + 1] = ("%sIncludes %s%s+%s%s%s from %s%s%s%s%s (%s)%s"):format(
+				C_GOLD, C_END, C_WHITE, num(statKey, p.amount), C_END, C_GOLD, C_END,
+				C_WHITE, LABELS[source] or "?", C_END, C_GREY, tag(t, rankOf(t)), C_END)
+			for _, pt in ipairs(talents) do
+				local c = breakdown.talents[pt.key]
+				for _, link in ipairs(c and c.chained[statKey] or {}) do
+					if link.via == p.key then
+						out[#out + 1] = ("%s  incl. +%s via %s%s"):format(C_GREY, num(statKey, link.amount), pt.name, C_END)
+					end
+				end
+			end
+		end
+	end
+
+	-- d. this stat only exists because of a talent
+	for _, p in ipairs(stat and stat.parts or {}) do
+		local t = byKey[p.key]
+		if t and p.op == "enables" then
+			out[#out + 1] = ("%sEnabled by %s%s%s%s"):format(C_GOLD, C_END, C_WHITE, t.name .. (t.inferred and "*" or ""), C_END)
+		end
+	end
+	return out
+end

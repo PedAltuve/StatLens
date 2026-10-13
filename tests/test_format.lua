@@ -124,3 +124,35 @@ T.test("TooltipLines conditional and utility", function()
 	l = ns.Format.TooltipLines(eg, 0, { stats = {}, talents = {} }, nil)
 	T.eq(l[2].text, "No stat effect.")
 end)
+
+-- StatTooltipLines
+local G, W, D, E = "|cffffd100", "|cffffffff", "|cff999999", "|r"
+
+T.test("StatTooltipLines", function()
+	local ns, d = load()
+	local v = { int = 72, stam = 200, ap = 200, meleeCrit = 10, parry = 5 }
+	local ranks = { ancestralKnowledge = 1, mentalDexterity = 3, thunderingStrikes = 5, spiritWeapons = 1 }
+	local b = ns.Calc.Breakdown(v, ranks, d)
+	local L = function(stat) return ns.Format.StatTooltipLines(stat, b, d, ranks) end
+
+	local int = L("int")
+	T.eq(#int, 2)
+	T.eq(int[1], G .. "Talents add " .. E .. W .. "+1" .. E .. D .. " (Ancestral Knowledge 1/5)" .. E)
+	T.eq(int[2], G .. "Increases " .. E .. W .. "Attack Power" .. E .. G .. " by " .. E .. W .. "72" .. E
+		.. D .. " (Mental Dexterity* 3/3)" .. E)
+
+	local ap = L("ap")
+	T.eq(#ap, 2)
+	T.eq(ap[1], G .. "Includes " .. E .. W .. "+72" .. E .. G .. " from " .. E .. W .. "Intellect" .. E
+		.. D .. " (Mental Dexterity* 3/3)" .. E)
+	T.eq(ap[2], D .. "  incl. +1 via Ancestral Knowledge" .. E)
+
+	local crit = L("meleeCrit")
+	T.eq(crit[1], G .. "Talents add " .. E .. W .. "+5.0%" .. E .. D .. " (Thundering Strikes 5/5)" .. E)
+
+	local parry = L("parry")
+	T.eq(parry[1], G .. "Enabled by " .. E .. W .. "Spirit Weapons" .. E)
+
+	T.eq(#L("stam"), 0, "nothing applies")
+	T.eq(#L("str"), 0)
+end)

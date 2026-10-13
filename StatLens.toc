@@ -13,3 +13,4 @@ Calc.lua
 Format.lua
 Panel.lua
 Tooltip.lua
+StatTooltip.lua
