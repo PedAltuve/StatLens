@@ -111,3 +111,26 @@ T.test("/sl form prints raw id and mapped name", function()
 	SlashCmdList.STATLENS("form")
 	T.truthy(table.concat(S.chat, "\n"):find("form id: none", 1, true), "missing API prints none")
 end)
+
+T.test("Stats.Read spirit, hit, spellHit, health", function()
+	local ns = load()
+	fullApi()
+	_G.UnitStat = function(_, i) return 100 + i, 200 + i end
+	_G.GetHitModifier = function() return 1.5 end
+	_G.GetSpellHitModifier = function() return 2.5 end
+	_G.UnitHealthMax = function() return 850 end
+	local v = ns.Stats.Read().values
+	T.eq(v.spirit, 205, "UnitStat 5 effective"); T.eq(v.hit, 1.5); T.eq(v.spellHit, 2.5); T.eq(v.health, 850)
+end)
+
+T.test("Stats.Read new values: missing API nil, secret flagged", function()
+	local ns = load()
+	fullApi()
+	_G.UnitStat = function(_, i) return 1, 2 end
+	local r = ns.Stats.Read()
+	T.truthy(r.ok); T.eq(r.values.hit, nil); T.eq(r.values.spellHit, nil); T.eq(r.values.health, nil)
+	_G.UnitHealthMax = function() return 777 end
+	_G.issecretvalue = function(v) return v == 777 end
+	r = ns.Stats.Read()
+	T.eq(r.secret, true); T.eq(r.ok, false)
+end)

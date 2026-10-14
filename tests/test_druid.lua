@@ -46,12 +46,12 @@ end)
 
 T.test("panel lines, cat form", function()
 	expect(dump(lines("cat")), {
-		"0|stat|Intellect 50 (talents +5)",
-		"1|part|Heart of the Wild 5/5: +5",
-		"0|stat|Stamina 200",
-		"1|inactive|Heart of the Wild 5/5: +40 in Bear Form",
 		"0|stat|Strength 110 (talents +10)",
 		"1|part|Heart of the Wild 5/5: +10",
+		"0|stat|Stamina 200",
+		"1|inactive|Heart of the Wild 5/5: +40 in Bear Form",
+		"0|stat|Intellect 50 (talents +5)",
+		"1|part|Heart of the Wild 5/5: +5",
 		"0|stat|Attack Power 300 (talents +38)",
 		"1|part|Predatory Strikes 3/3: +38 (150% of level)",
 		"0|stat|Melee Crit 20.0% (talents +6.0%)",
@@ -63,18 +63,19 @@ end)
 
 T.test("panel lines, bear form flips str to inactive", function()
 	local got = dump(lines("bear"))
-	T.truthy(got[3] == "0|stat|Stamina 200 (talents +33)", "stam active: " .. tostring(got[3]))
+	T.eq(got[1], "0|stat|Strength 110")
+	T.eq(got[2], "1|inactive|Heart of the Wild 5/5: +11 in Cat Form")
+	T.eq(got[3], "0|stat|Stamina 200 (talents +33)")
 	T.eq(got[4], "1|part|Heart of the Wild 5/5: +33")
-	T.eq(got[5], "0|stat|Strength 110")
-	T.eq(got[6], "1|inactive|Heart of the Wild 5/5: +11 in Cat Form")
 	T.eq(got[8], "1|part|Predatory Strikes 3/3: +38 (150% of level)", "cat or bear still active")
 end)
 
 T.test("panel lines, no form: all form effects inactive", function()
 	local got = dump(lines(nil))
+	T.eq(got[1], "0|stat|Strength 110")
+	T.eq(got[2], "1|inactive|Heart of the Wild 5/5: +11 in Cat Form")
 	T.eq(got[3], "0|stat|Stamina 200")
 	T.eq(got[4], "1|inactive|Heart of the Wild 5/5: +40 in Bear Form")
-	T.eq(got[6], "1|inactive|Heart of the Wild 5/5: +11 in Cat Form")
 	T.eq(got[7], "0|stat|Attack Power 300")
 	T.eq(got[8], "1|inactive|Predatory Strikes 3/3: +38 in Cat or Bear Form")
 	T.eq(got[9], "0|stat|Melee Crit 20.0%")
@@ -102,12 +103,12 @@ T.test("TooltipLines with inactive contributions and next point", function()
 	local t = {}
 	for i, x in ipairs(l) do t[i] = x.text end
 	T.eq(t[1], "StatLens")
-	T.eq(t[2], "Now: +4 Intellect")
-	T.eq(t[3], "Now: +8 Strength")
+	T.eq(t[2], "Now: +8 Strength")
+	T.eq(t[3], "Now: +4 Intellect")
 	T.eq(t[4], "In Bear Form: +32 Stamina")
 	T.near(l[4].r, 0.6, 1e-9); T.near(l[4].g, 0.6, 1e-9)
-	T.eq(t[5], "Next point (5/5): +1 Intellect")
-	T.eq(t[6], "Next point (5/5): +2 Strength")
+	T.eq(t[5], "Next point (5/5): +2 Strength")
+	T.eq(t[6], "Next point (5/5): +1 Intellect")
 	T.eq(t[7], "Next point (5/5): +8 Stamina in Bear Form")
 	T.near(l[7].r, 0.6, 1e-9)
 	T.eq(#t, 7)

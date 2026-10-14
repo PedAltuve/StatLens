@@ -172,3 +172,23 @@ T.test("heal and armor labels and order", function()
 	local joined = table.concat(tt, "\n")
 	T.truthy(joined:find("Spell Healing", 1, true), "tooltip names heal")
 end)
+
+T.test("new stat labels, order and rendering", function()
+	local ns = load()
+	local d = { talents = {
+		{ key = "a", name = "A", maxRank = 1, kind = "stat", explain = "x", effects = {
+			{ stat = "health", op = "pct", perRank = { 0.1 } }, { stat = "spirit", op = "pct", perRank = { 0.1 } },
+			{ stat = "hit", op = "flat", perRank = { 2 } }, { stat = "spellHit", op = "flat", perRank = { 2 } },
+			{ stat = "stam", op = "pct", perRank = { 0.1 } }, { stat = "int", op = "pct", perRank = { 0.1 } } } },
+	} }
+	local v = { health = 1100, spirit = 110, hit = 3, spellHit = 4, stam = 110, int = 110 }
+	local lines = ns.Format.Lines(ns.Calc.Breakdown(v, { a = 1 }, d), { a = 1 }, d)
+	local heads = {}
+	for _, l in ipairs(lines) do if l.kind == "stat" then heads[#heads + 1] = l.text end end
+	T.eq(heads[1], "Health 1100 (talents +100)")
+	T.eq(heads[2], "Stamina 110 (talents +10)")
+	T.eq(heads[3], "Intellect 110 (talents +10)")
+	T.eq(heads[4], "Spirit 110 (talents +10)")
+	T.eq(heads[5], "Melee Hit 3.0% (talents +2.0%)")
+	T.eq(heads[6], "Spell Hit 4.0% (talents +2.0%)")
+end)

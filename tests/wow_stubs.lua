@@ -60,7 +60,7 @@ function S.reset()
 	_G.C_Traits, _G.C_ClassTalents, _G.C_Spell = nil, nil, nil
 	for _, n in ipairs({ "UnitStat", "UnitAttackPower", "GetSpellBonusDamage", "GetCritChance",
 		"GetSpellCritChance", "GetDodgeChance", "GetParryChance", "UnitLevel", "GetSpellBonusHealing",
-		"UnitArmor", "GetShapeshiftFormID" }) do _G[n] = nil end
+		"UnitArmor", "GetShapeshiftFormID", "GetHitModifier", "GetSpellHitModifier", "UnitHealthMax" }) do _G[n] = nil end
 	_G.C_Timer = { After = function(_, fn) fn() end }
 	_G.InCombatLockdown = function() return false end
 	_G.UIParent = newFrame()

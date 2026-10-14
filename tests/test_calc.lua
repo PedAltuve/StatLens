@@ -199,3 +199,17 @@ T.test("Mental Quickness feeds heal and AK chains into it", function()
 	b = ns.Calc.Breakdown(vals(), { mentalQuickness = 2 }, d)
 	T.eq(b.stats.heal, nil, "heal missing -> skipped")
 end)
+
+T.test("pct on health/spirit, flat on hit/spellHit", function()
+	local ns = load()
+	local d = synth({
+		T1("hp", { { stat = "health", op = "pct", perRank = { 0.05, 0.10, 0.15 } } }),
+		T1("sp5", { { stat = "spirit", op = "pct", perRank = { 0.05, 0.10, 0.15 } } }),
+		T1("h", { { stat = "hit", op = "flat", perRank = { 1, 2, 3 } }, { stat = "spellHit", op = "flat", perRank = { 1, 2, 3 } } }),
+	})
+	local v = { health = 1100, spirit = 69, hit = 1, spellHit = 2 }
+	local b = ns.Calc.Breakdown(v, { hp = 2, sp5 = 3, h = 2 }, d)
+	T.near(b.talents.hp.contributions.health, 100, 1e-9, "1100 - 1100/1.1")
+	T.near(b.talents.sp5.contributions.spirit, 69 - 69 / 1.15, 1e-9)
+	T.eq(b.talents.h.contributions.hit, 2); T.eq(b.talents.h.contributions.spellHit, 2)
+end)

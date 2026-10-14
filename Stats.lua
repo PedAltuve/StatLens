@@ -20,7 +20,7 @@ end
 
 local function readValues()
 	local v = {}
-	local names = { "str", "agi", "stam", "int" }
+	local names = { "str", "agi", "stam", "int", "spirit" }
 	for i, name in ipairs(names) do
 		local _, effective = try(UnitStat, "player", i)
 		v[name] = effective
@@ -50,6 +50,10 @@ local function readValues()
 	v.spellCrit = try(GetSpellCritChance, 4)
 	v.dodge = try(GetDodgeChance)
 	v.parry = try(GetParryChance)
+
+	v.hit = try(GetHitModifier)
+	v.spellHit = try(GetSpellHitModifier)
+	v.health = try(UnitHealthMax, "player")
 
 	v.level = try(UnitLevel, "player")
 	v.heal = try(GetSpellBonusHealing)
