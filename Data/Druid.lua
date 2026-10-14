@@ -82,8 +82,11 @@ ns.Data.DRUID = {
 		},
 		{
 			key = "leaderOfThePack", name = "Leader of the Pack", maxRank = 1, kind = "stat",
-			effects = { { stat = "meleeCrit", op = "flat", forms = { "cat", "bear" }, perRank = { 3 } } },
-			explain = "Increases the melee critical strike chance of you and your party by 3% while in Cat or Bear Form.",
+			effects = {
+				{ stat = "meleeCrit", op = "flat", forms = { "cat", "bear" }, perRank = { 3 } },
+				{ stat = "spellCrit", op = "flat", forms = { "cat", "bear" }, perRank = { 3 } },
+			},
+			explain = "Increases the critical strike chance of you and your party by 3% while in Cat or Bear Form.",
 		},
 		{
 			key = "naturalInstinct", name = "Natural Instinct", maxRank = 2, kind = "stat",
@@ -110,6 +113,139 @@ ns.Data.DRUID = {
 				{ stat = "spellCrit", op = "flat", perRank = { 2, 4 } },
 			},
 			explain = "Increases your critical strike chance with all spells and attacks by 2% per rank.",
+		},
+		{
+			key = "improvedWrath", name = "Improved Wrath", maxRank = 5, kind = "conditional", tree = "Balance",
+			explain = "Reduces the cast time of Wrath by 0.1 sec per rank and its mana cost by 10% per rank.",
+		},
+		{
+			key = "genesis", name = "Genesis", maxRank = 5, kind = "conditional", tree = "Balance",
+			explain = "Increases the periodic damage and healing of your spells and abilities by 1% per rank.",
+		},
+		{
+			key = "moonglow", name = "Moonglow", maxRank = 3, kind = "utility", tree = "Balance",
+			explain = "Reduces the mana cost of your damaging spells by 8% at rank 1 and 25% at rank 3.",
+		},
+		{
+			key = "improvedMoonfire", name = "Improved Moonfire", maxRank = 2, kind = "conditional", tree = "Balance",
+			explain = "Increases the damage and critical strike chance of Moonfire by 5% per rank.",
+		},
+		{
+			key = "naturesReach", name = "Nature's Reach", maxRank = 2, kind = "stat", tree = "Balance",
+			effects = {
+				{ stat = "hit", op = "flat", perRank = { 2, 4 } },
+				{ stat = "spellHit", op = "flat", perRank = { 2, 4 } },
+			},
+			explain = "Improves your chance to hit by 2% per rank and increases the range of offensive Balance spells by 10% per rank.",
+		},
+		{
+			key = "improvedEntanglingRoots", name = "Improved Entangling Roots", maxRank = 3, kind = "conditional", tree = "Balance",
+			explain = "Increases Entangling Roots damage by 25% per rank, and its victims can take that much more damage without breaking free.",
+		},
+		{
+			key = "naturesSplendor", name = "Nature's Splendor", maxRank = 1, kind = "utility", tree = "Balance",
+			explain = "Increases the duration of Moonfire and Rejuvenation by 3 sec, Regrowth by 6 sec and Insect Swarm by 2 sec.",
+		},
+		{
+			key = "insectSwarm", name = "Insect Swarm", maxRank = 1, kind = "conditional", tree = "Balance",
+			explain = "Grants Insect Swarm: reduces the target's chance to hit by 2% and deals Nature damage over 12 sec.",
+		},
+		{
+			key = "vengeance", name = "Vengeance", maxRank = 5, kind = "conditional", tree = "Balance",
+			explain = "Increases the critical strike damage bonus of your Arcane and Nature spells by 20% per rank.",
+		},
+		{
+			key = "improvedStarfire", name = "Improved Starfire", maxRank = 5, kind = "conditional", tree = "Balance",
+			explain = "Reduces the cast time of Starfire by 0.1 sec per rank and gives it a 3% chance per rank to stun for 3 sec.",
+		},
+		{
+			key = "overgrowth", name = "Overgrowth", maxRank = 2, kind = "utility", tree = "Balance",
+			explain = "Increases the maximum number of targets affected by Entangling Roots by 1 per rank.",
+		},
+		{
+			key = "naturesGrace", name = "Nature's Grace", maxRank = 1, kind = "conditional", tree = "Balance",
+			explain = "Non-periodic spell crits increase your spellcasting speed and reduce your global cooldown by 10% for 3 sec.",
+		},
+		{
+			key = "eclipse", name = "Eclipse", maxRank = 3, kind = "conditional", tree = "Balance",
+			explain = "Wrath reduces the cast time of your next 2 Starfire casts by 0.17 sec at rank 1 and 0.5 sec at rank 3 (up to 4 charges, 15 sec).",
+		},
+		{
+			key = "moonfury", name = "Moonfury", maxRank = 5, kind = "conditional", tree = "Balance",
+			explain = "Increases the damage of your Arcane and Nature spells by 2% per rank.",
+		},
+		{
+			key = "moonkinForm", name = "Moonkin Form", maxRank = 1, kind = "stat", tree = "Balance",
+			effects = {
+				{ stat = "meleeCrit", op = "flat", forms = { "moonkin" }, perRank = { 3 } },
+				{ stat = "spellCrit", op = "flat", forms = { "moonkin" }, perRank = { 3 } },
+			},
+			explain = "In Moonkin Form, you and your party gain 3% critical strike chance (exclusive with Leader of the Pack); also +360% armor from items, better Omen of Clarity odds, and no healing spells.",
+		},
+		{
+			key = "naturesFocus", name = "Nature's Focus", maxRank = 5, kind = "utility", tree = "Restoration",
+			explain = "Gives a 14% chance per rank to avoid interruption by damage while casting Arcane and Nature spells.",
+		},
+		{
+			key = "furor", name = "Furor", maxRank = 5, kind = "utility", tree = "Restoration",
+			explain = "Improves Rage gained when entering Bear Form (20% chance per rank for 10 Rage) and Energy restored when entering Cat Form.",
+		},
+		{
+			key = "naturalist", name = "Naturalist", maxRank = 5, kind = "conditional", tree = "Restoration",
+			explain = "Reduces the cast time of Healing Touch by 0.1 sec per rank and increases all damage you deal by 1% per rank.",
+		},
+		{
+			key = "subtlety", name = "Subtlety", maxRank = 3, kind = "utility", tree = "Restoration",
+			explain = "Reduces the threat generated by your Nature and Arcane spells by 10% per rank.",
+		},
+		{
+			key = "naturalShapeshifter", name = "Natural Shapeshifter", maxRank = 3, kind = "utility", tree = "Restoration",
+			explain = "Reduces the mana cost of all shapeshifting by 10% per rank.",
+		},
+		{
+			key = "reflection", name = "Reflection", maxRank = 3, kind = "conditional", tree = "Restoration",
+			explain = "Allows 17% of your mana regeneration to continue while casting at rank 1 and 50% at rank 3.",
+		},
+		{
+			key = "giftOfNature", name = "Gift of Nature", maxRank = 5, kind = "conditional", tree = "Restoration",
+			explain = "Increases the effect of all your healing spells by 2% per rank.",
+		},
+		{
+			key = "giftOfTheEarthmother", name = "Gift of the Earthmother", maxRank = 1, kind = "utility", tree = "Restoration",
+			explain = "Reduces the global cooldown of Rejuvenation, Swiftmend and Wild Growth by 0.5 sec.",
+		},
+		{
+			key = "tranquilSpirit", name = "Tranquil Spirit", maxRank = 5, kind = "conditional", tree = "Restoration",
+			explain = "Reduces the mana cost of Healing Touch and Tranquility by 2% per rank.",
+		},
+		{
+			key = "improvedRejuvenation", name = "Improved Rejuvenation", maxRank = 3, kind = "conditional", tree = "Restoration",
+			explain = "Increases the effect of Rejuvenation by 5% per rank.",
+		},
+		{
+			key = "swiftmend", name = "Swiftmend", maxRank = 1, kind = "utility", tree = "Restoration",
+			explain = "Grants Swiftmend: instantly heals a target with Rejuvenation or Regrowth (15 sec cooldown).",
+		},
+		{
+			key = "naturesSwiftness", name = "Nature's Swiftness", maxRank = 1, kind = "utility", tree = "Restoration",
+			explain = "Grants Nature's Swiftness: your next Nature spell becomes instant (3 min cooldown).",
+		},
+		{
+			key = "livingSpirit", name = "Living Spirit", maxRank = 3, kind = "stat", tree = "Restoration",
+			effects = { { stat = "spirit", op = "pct", perRank = { 0.05, 0.10, 0.15 } } },
+			explain = "Increases your Spirit by 5% per rank.",
+		},
+		{
+			key = "improvedTranquility", name = "Improved Tranquility", maxRank = 2, kind = "utility", tree = "Restoration",
+			explain = "Reduces the threat of Tranquility by 50% per rank and its cooldown by 30% per rank.",
+		},
+		{
+			key = "improvedRegrowth", name = "Improved Regrowth", maxRank = 5, kind = "conditional", tree = "Restoration",
+			explain = "Increases the critical effect chance of Regrowth by 10% per rank.",
+		},
+		{
+			key = "wildGrowth", name = "Wild Growth", maxRank = 1, kind = "utility", tree = "Restoration",
+			explain = "Grants Wild Growth: heals the target and their party over 7 sec (6 sec cooldown).",
 		},
 	},
 }

@@ -2,7 +2,22 @@
 
 WoW: Forever addon that explains how your talents change your character stats.
 
-Supported: Shaman (Enhancement tree) and Druid (Feral Combat tree, plus Nature's Majesty). enUS client, Interface 16001 (beta build 1.60.1.70338).
+Supported: Shaman and Druid, all three talent trees each. enUS client, Interface 16001 (beta build 1.60.1.70338).
+
+Talents that change character sheet stats:
+
+| Class | Tree | Talents |
+| --- | --- | --- |
+| Shaman | Elemental Combat | none (all spell-specific) |
+| Shaman | Enhancement | Thundering Strikes, Ancestral Knowledge, Mental Dexterity, Anticipation, Toughness, Spirit Weapons, Mental Quickness |
+| Shaman | Restoration | Tidal Focus (hit), Improved Reincarnation (health) |
+| Druid | Balance | Nature's Majesty, Nature's Reach (hit), Moonkin Form (crit aura) |
+| Druid | Feral Combat | Heart of the Wild, Feral Swiftness, Thick Hide, Sharpened Claws, Predatory Strikes, Leader of the Pack, Natural Instinct, Natural Reaction |
+| Druid | Restoration | Living Spirit (Spirit) |
+
+Every other talent is listed too, so its tooltip explains it even though it does not change the sheet.
+
+Party auras (Leader of the Pack, Moonkin Form) are attributed to your talent; if a groupmate provides the same aura, the client total already includes it.
 
 ## What it shows
 
