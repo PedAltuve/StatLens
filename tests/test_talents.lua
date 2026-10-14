@@ -47,7 +47,7 @@ local KINDS = { stat = 1, conditional = 1, utility = 1 }
 
 T.test("data integrity (all classes)", function()
 	local ns = load()
-	local expected = { SHAMAN = 50, DRUID = 21 }
+	local expected = { SHAMAN = 50, DRUID = 52 }
 	local classes = 0
 	for class, d in pairs(ns.Data) do
 		classes = classes + 1
@@ -194,4 +194,43 @@ T.test("Read matches Elemental and Restoration talents by name", function()
 	T.eq(#r.unmatched, 0, "nothing unmatched")
 	T.eq(ns.Talents.ByName("Riptide").tree, "Restoration")
 	T.eq(ns.Talents.ByName("Concussion").tree, "Elemental Combat")
+end)
+
+T.test("druid: 52 unique talents across three trees", function()
+	local ns = load()
+	local d = ns.Data.DRUID
+	T.eq(#d.talents, 52)
+	local names, trees = {}, {}
+	for _, t in ipairs(d.talents) do
+		T.truthy(not names[t.name], "unique name " .. t.name)
+		names[t.name] = true
+		local tree = t.tree or "Feral Combat"
+		trees[tree] = (trees[tree] or 0) + 1
+	end
+	T.eq(trees["Feral Combat"], 20); T.eq(trees["Balance"], 16); T.eq(trees["Restoration"], 16)
+end)
+
+T.test("Read matches Balance and Restoration druid talents", function()
+	local ns = load()
+	_G.UnitClass = function() return "Druid", "DRUID" end
+	local spells = { [1] = "Moonfury", [2] = "Wild Growth", [3] = "Living Spirit" }
+	local nodes = {
+		[1] = { ID = 1, entryIDs = { 1 }, currentRank = 5 },
+		[2] = { ID = 2, entryIDs = { 2 }, currentRank = 1 },
+		[3] = { ID = 3, entryIDs = { 3 }, currentRank = 3 },
+	}
+	_G.C_ClassTalents = { GetActiveConfigID = function() return 9 end }
+	_G.C_Spell = { GetSpellName = function(id) return spells[id] end }
+	_G.C_Traits = {
+		GetConfigInfo = function() return { treeIDs = { 7 } } end,
+		GetTreeNodes = function() return { 1, 2, 3 } end,
+		GetNodeInfo = function(_, id) return nodes[id] end,
+		GetEntryInfo = function(_, e) return { definitionID = e } end,
+		GetDefinitionInfo = function(d) return { spellID = d } end,
+	}
+	local r = ns.Talents.Read()
+	T.eq(r.ranks.moonfury, 5); T.eq(r.ranks.wildGrowth, 1); T.eq(r.ranks.livingSpirit, 3)
+	T.eq(#r.unmatched, 0)
+	T.eq(ns.Talents.ByName("Moonfury").tree, "Balance")
+	T.eq(ns.Talents.ByName("Wild Growth").tree, "Restoration")
 end)

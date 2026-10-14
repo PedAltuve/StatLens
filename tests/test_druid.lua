@@ -127,3 +127,30 @@ T.test("StatTooltipLines inactive and perLevel", function()
 	T.eq(ns.Format.StatTooltipLines("ap", none, d, RANKS)[1], D .. "In Cat or Bear Form: +38 (Predatory Strikes 3/3)" .. E)
 	T.eq(#ns.Format.StatTooltipLines("ap", none, d, RANKS), 1, "no active lines when inactive")
 end)
+
+T.test("Nature's Reach, Living Spirit, Moonkin Form, Leader of the Pack", function()
+	local ns, d = load()
+	local b = ns.Calc.Breakdown({ hit = 5, spellHit = 6 }, { naturesReach = 2 }, d)
+	T.eq(b.talents.naturesReach.contributions.hit, 4); T.eq(b.talents.naturesReach.contributions.spellHit, 4)
+	local lines = ns.Format.Lines(b, { naturesReach = 2 }, d)
+	T.eq(lines[1].text, "Melee Hit 5.0% (talents +4.0%)")
+
+	b = ns.Calc.Breakdown({ spirit = 115 }, { livingSpirit = 3 }, d)
+	T.near(b.talents.livingSpirit.contributions.spirit, 15, 1e-9, "115 - 115/1.15")
+
+	local v = { meleeCrit = 10, spellCrit = 8 }
+	v.form = "moonkin"
+	b = ns.Calc.Breakdown(v, { moonkinForm = 1 }, d)
+	T.eq(b.talents.moonkinForm.contributions.meleeCrit, 3); T.eq(b.talents.moonkinForm.contributions.spellCrit, 3)
+	v.form = "cat"
+	b = ns.Calc.Breakdown(v, { moonkinForm = 1 }, d)
+	T.eq(b.talents.moonkinForm.contributions.meleeCrit, nil)
+	T.eq(b.talents.moonkinForm.inactive.spellCrit, 3)
+	local got = dump(ns.Format.Lines(b, { moonkinForm = 1 }, d))
+	T.truthy(got[2] and got[2]:find("^1|inactive|Moonkin Form 1/1: %+3.0%% in Moonkin Form"), tostring(got[2]))
+
+	v.form = "cat"
+	b = ns.Calc.Breakdown(v, { leaderOfThePack = 1 }, d)
+	T.eq(b.talents.leaderOfThePack.contributions.spellCrit, 3, "LotP spell crit in cat form")
+	T.eq(b.talents.leaderOfThePack.contributions.meleeCrit, 3)
+end)
