@@ -25,6 +25,16 @@ local function formName(id)
 	return Stats.FORMS[id] or ("form:" .. tostring(id))
 end
 
+-- Returns true and the first secret among the given values, or false. The flag is separate so callers
+-- never test or compare the secret itself; a secret component is never summed.
+local function firstSecret(...)
+	for i = 1, select("#", ...) do
+		local x = select(i, ...)
+		if ns.IsSecret(x) then return true, x end
+	end
+	return false
+end
+
 -- Kind of the item in an equipment slot: weapon kind, "shield", "offhand", or nil. A secret id is
 -- returned raw so Read() can flag it.
 local function slotKind(slot)
@@ -48,11 +58,8 @@ local function readValues()
 	local base, pos, neg = try(UnitAttackPower, "player")
 	if base ~= nil and pos ~= nil and neg ~= nil then
 		-- A secret component poisons the sum; keep it as-is so the caller can detect it.
-		if ns.IsSecret(base) or ns.IsSecret(pos) or ns.IsSecret(neg) then
-			v.ap = base
-		else
-			v.ap = base + pos + neg
-		end
+		local hasSecret, secret = firstSecret(base, pos, neg)
+		if hasSecret then v.ap = secret else v.ap = base + pos + neg end
 	end
 
 	local sp
@@ -82,7 +89,8 @@ local function readValues()
 	v.block = try(GetBlockChance)
 	local defBase, defMod = try(UnitDefense, "player")
 	if defBase ~= nil and defMod ~= nil then
-		if ns.IsSecret(defBase) or ns.IsSecret(defMod) then v.defense = defBase else v.defense = defBase + defMod end
+		local hasSecret, secret = firstSecret(defBase, defMod)
+		if hasSecret then v.defense = secret else v.defense = defBase + defMod end
 	end
 
 	v.mainHand = slotKind(16)
