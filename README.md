@@ -83,12 +83,27 @@ Assumption: talent percentages multiply the buffed stat. If the client stacks th
 | `/sl tooltip` | Toggle tooltip lines |
 | `/sl debug` | Toggle debug output |
 
-## Install (Linux / Wine)
+## Install
+
+Download the latest `StatLens-*-forever.zip` from [Releases](https://github.com/PedAltuve/StatLens/releases) and extract it into `World of Warcraft/_classic_beta_/Interface/AddOns/`, so you end up with `AddOns/StatLens/StatLens.toc`.
+
+For development, link the repository instead (Linux / Wine example):
 
 ```sh
 ln -s ~/Projects/StatLens \
   "$HOME/Games/battlenet/drive_c/Program Files (x86)/World of Warcraft/_classic_beta_/Interface/AddOns/StatLens"
 ```
+
+## Releasing
+
+Pushing an annotated tag `vX.Y.Z` runs `.github/workflows/release.yml`: it runs the tests, then [BigWigsMods/packager](https://github.com/BigWigsMods/packager) builds the zip (see `.pkgmeta`) and publishes it to GitHub Releases, plus CurseForge and Wago when their tokens and project IDs are configured.
+
+```sh
+git tag -a v0.2.0 -m "v0.2.0"
+git push origin v0.2.0
+```
+
+Repository secrets: `CF_API_KEY` (CurseForge) and `WAGO_API_TOKEN` (Wago). Project IDs go in `StatLens.toc` as `## X-Curse-Project-ID:` and `## X-Wago-ID:`.
 
 ## Development
 

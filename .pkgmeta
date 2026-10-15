@@ -1,0 +1,6 @@
+package-as: StatLens
+
+ignore:
+  - tests
+  - docs
+  - README.md

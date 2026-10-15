@@ -2,7 +2,7 @@
 ## Title: StatLens
 ## Notes: Explains how your talents change your stats.
 ## Author: Pedro Altuve
-## Version: 0.1.0
+## Version: @project-version@
 ## SavedVariables: StatLensDB
 
 Core.lua
