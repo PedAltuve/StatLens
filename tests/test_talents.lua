@@ -6,6 +6,7 @@ local function load()
 	S.loadAddonFile("Core.lua", ns)
 	S.loadAddonFile("Data/Shaman.lua", ns)
 	S.loadAddonFile("Data/Druid.lua", ns)
+	S.loadAddonFile("Data/Warrior.lua", ns)
 	S.loadAddonFile("Talents.lua", ns)
 	return ns
 end
@@ -40,14 +41,14 @@ local function fakeClient()
 	}
 end
 
-local STATS = { hit = 1, spellHit = 1, health = 1, spirit = 1, int = 1, stam = 1, agi = 1, str = 1, ap = 1, sp = 1, heal = 1, meleeCrit = 1,
+local STATS = { defense = 1, block = 1, hit = 1, spellHit = 1, health = 1, spirit = 1, int = 1, stam = 1, agi = 1, str = 1, ap = 1, sp = 1, heal = 1, meleeCrit = 1,
 	spellCrit = 1, dodge = 1, parry = 1, armor = 1 }
 local OPS = { pct = 1, flat = 1, fromStat = 1, perLevel = 1, enables = 1 }
 local KINDS = { stat = 1, conditional = 1, utility = 1 }
 
 T.test("data integrity (all classes)", function()
 	local ns = load()
-	local expected = { SHAMAN = 50, DRUID = 52 }
+	local expected = { SHAMAN = 50, DRUID = 52, WARRIOR = 52 }
 	local classes = 0
 	for class, d in pairs(ns.Data) do
 		classes = classes + 1
@@ -71,7 +72,7 @@ T.test("data integrity (all classes)", function()
 			if t.kind == "stat" then T.truthy(t.effects and #t.effects > 0, "effects " .. id) end
 		end
 	end
-	T.eq(classes, 2)
+	T.eq(classes, 3)
 	T.eq(ns.Data.SHAMAN.tree, "Enhancement"); T.eq(ns.Data.DRUID.tree, "Feral Combat")
 end)
 
@@ -233,4 +234,46 @@ T.test("Read matches Balance and Restoration druid talents", function()
 	T.eq(#r.unmatched, 0)
 	T.eq(ns.Talents.ByName("Moonfury").tree, "Balance")
 	T.eq(ns.Talents.ByName("Wild Growth").tree, "Restoration")
+end)
+
+T.test("warrior: 52 unique talents, 17/17/18 split", function()
+	local ns = load()
+	local d = ns.Data.WARRIOR
+	T.eq(d.tree, "Arms"); T.eq(#d.talents, 52)
+	local names, trees = {}, {}
+	for _, t in ipairs(d.talents) do
+		T.truthy(not names[t.name], "unique name " .. t.name)
+		names[t.name] = true
+		local tree = t.tree or "Arms"
+		trees[tree] = (trees[tree] or 0) + 1
+		for _, e in ipairs(t.effects or {}) do
+			if e.weapons then T.truthy(#e.weapons > 0, "weapons " .. t.key) end
+		end
+	end
+	T.eq(trees.Arms, 17); T.eq(trees.Fury, 17); T.eq(trees.Protection, 18)
+end)
+
+T.test("Read matches one warrior talent per tree", function()
+	local ns = load()
+	_G.UnitClass = function() return "Warrior", "WARRIOR" end
+	local spells = { [1] = "Deflection", [2] = "Cruelty", [3] = "Anticipation" }
+	local nodes = {
+		[1] = { ID = 1, entryIDs = { 1 }, currentRank = 5 },
+		[2] = { ID = 2, entryIDs = { 2 }, currentRank = 4 },
+		[3] = { ID = 3, entryIDs = { 3 }, currentRank = 3 },
+	}
+	_G.C_ClassTalents = { GetActiveConfigID = function() return 9 end }
+	_G.C_Spell = { GetSpellName = function(id) return spells[id] end }
+	_G.C_Traits = {
+		GetConfigInfo = function() return { treeIDs = { 7 } } end,
+		GetTreeNodes = function() return { 1, 2, 3 } end,
+		GetNodeInfo = function(_, id) return nodes[id] end,
+		GetEntryInfo = function(_, e) return { definitionID = e } end,
+		GetDefinitionInfo = function(d) return { spellID = d } end,
+	}
+	local r = ns.Talents.Read()
+	T.eq(r.ranks.deflection, 5); T.eq(r.ranks.cruelty, 4); T.eq(r.ranks.anticipation, 3)
+	T.eq(#r.unmatched, 0)
+	T.eq(ns.Talents.ByName("Cruelty").tree, "Fury")
+	T.eq(ns.Talents.ByName("Anticipation").tree, "Protection")
 end)
