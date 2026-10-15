@@ -43,6 +43,9 @@ local function slotKind(slot)
 	if ns.IsSecret(id) then return id end
 	local info = C_Item and C_Item.GetItemInfoInstant
 	local _, _, _, _, _, classID, subClassID = try(info, id)
+	-- Never compare, concatenate or index with a secret; hand it back so Read() flags it.
+	local hasSecret, secret = firstSecret(classID, subClassID)
+	if hasSecret then return secret end
 	if classID == 2 then return Stats.WEAPONS[subClassID] or ("weapon:" .. tostring(subClassID)) end
 	if slot == 17 and classID == 4 then return subClassID == 6 and "shield" or "offhand" end
 end

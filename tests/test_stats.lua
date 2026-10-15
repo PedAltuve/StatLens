@@ -214,3 +214,30 @@ T.test("Stats.Read defense with only the modifier secret", function()
 	T.truthy(ok, "no error")
 	T.eq(r.ok, false); T.eq(r.secret, true)
 end)
+
+T.test("Stats.Read slotKind: secret subClassID or classID is flagged, not used", function()
+	local cases = {
+		{ "subClassID", function(id) return id, "t", "s", "loc", 1, 2, 999 end },
+		{ "classID", function(id) return id, "t", "s", "loc", 1, 999, 1 end },
+	}
+	for _, c in ipairs(cases) do
+		local ns = load()
+		fullApi()
+		_G.GetInventoryItemID = function(_, slot) return slot == 16 and 1600 or nil end
+		_G.C_Item = { GetItemInfoInstant = c[2] }
+		_G.issecretvalue = function(v) return v == 999 end
+		local ok, r = pcall(ns.Stats.Read)
+		T.truthy(ok, "no error " .. c[1])
+		T.eq(r.ok, false, "ok " .. c[1]); T.eq(r.secret, true, "secret " .. c[1])
+	end
+end)
+
+T.test("Stats.Read slotKind: secret classID on off hand slot", function()
+	local ns = load()
+	fullApi()
+	_G.GetInventoryItemID = function(_, slot) return slot == 17 and 1700 or nil end
+	_G.C_Item = { GetItemInfoInstant = function(id) return id, "t", "s", "loc", 1, 999, 6 end }
+	_G.issecretvalue = function(v) return v == 999 end
+	local ok, r = pcall(ns.Stats.Read)
+	T.truthy(ok); T.eq(r.secret, true)
+end)
