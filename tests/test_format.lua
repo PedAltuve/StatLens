@@ -192,3 +192,48 @@ T.test("new stat labels, order and rendering", function()
 	T.eq(heads[5], "Melee Hit 3.0% (talents +2.0%)")
 	T.eq(heads[6], "Spell Hit 4.0% (talents +2.0%)")
 end)
+
+T.test("condition text for inactive parts", function()
+	local ns = load()
+	local d = { talents = {
+		{ key = "wm", name = "Weaponmaster", maxRank = 1, kind = "stat", explain = "x",
+			effects = { { stat = "meleeCrit", op = "flat", weapons = { "axe", "polearm" }, perRank = { 5 } } } },
+		{ key = "sh", name = "Shield Thing", maxRank = 1, kind = "stat", explain = "x",
+			effects = { { stat = "block", op = "flat", shield = true, perRank = { 3 } } } },
+		{ key = "cb", name = "Combo", maxRank = 1, kind = "stat", explain = "x",
+			effects = { { stat = "dodge", op = "flat", forms = { "cat" }, weapons = { "sword" }, perRank = { 2 } } } },
+	} }
+	local ranks = { wm = 1, sh = 1, cb = 1 }
+	local v = { meleeCrit = 10, block = 5, dodge = 4, defense = 300, mainHand = "sword", offHand = "offhand" }
+	local b = ns.Calc.Breakdown(v, ranks, d)
+	local out = {}
+	for _, l in ipairs(ns.Format.Lines(b, ranks, d)) do out[#out + 1] = l.kind .. "|" .. l.text end
+	local all = table.concat(out, "\n")
+	T.truthy(all:find("inactive|Weaponmaster 1/1: +5.0% with an Axe or Polearm", 1, true), all)
+	T.truthy(all:find("inactive|Shield Thing 1/1: +3.0% with a shield", 1, true), all)
+	T.truthy(all:find("inactive|Combo 1/1: +2.0% in Cat Form and with a Sword", 1, true), all)
+	T.truthy(all:find("Block 5.0%", 1, true) and all:find("Dodge 4.0%", 1, true))
+	local st = ns.Format.StatTooltipLines("meleeCrit", b, d, ranks)
+	T.eq(st[1], "|cff999999With an Axe or Polearm: +5.0% (Weaponmaster 1/1)|r")
+	local entry = d.talents[1]
+	local tl = ns.Format.TooltipLines(entry, 1, b, nil)
+	T.eq(tl[2].text, "With an Axe or Polearm: +5.0% Melee Crit")
+end)
+
+T.test("defense/block labels and order", function()
+	local ns = load()
+	local d = { talents = {
+		{ key = "a", name = "A", maxRank = 1, kind = "stat", explain = "x", effects = {
+			{ stat = "defense", op = "flat", perRank = { 5 } }, { stat = "block", op = "flat", perRank = { 2 } },
+			{ stat = "dodge", op = "flat", perRank = { 1 } }, { stat = "parry", op = "flat", perRank = { 1 } } } },
+	} }
+	local v = { defense = 300, block = 5, dodge = 4, parry = 6 }
+	local heads = {}
+	for _, l in ipairs(ns.Format.Lines(ns.Calc.Breakdown(v, { a = 1 }, d), { a = 1 }, d)) do
+		if l.kind == "stat" then heads[#heads + 1] = l.text end
+	end
+	T.eq(heads[1], "Defense 300 (talents +5)")
+	T.eq(heads[2], "Dodge 4.0% (talents +1.0%)")
+	T.eq(heads[3], "Parry 6.0% (talents +1.0%)")
+	T.eq(heads[4], "Block 5.0% (talents +2.0%)")
+end)

@@ -221,3 +221,33 @@ T.test("Tidal Focus and Improved Reincarnation on real shaman data", function()
 	T.eq(b.talents.tidalFocus.contributions.spellHit, 3)
 	T.near(b.talents.improvedReincarnation.contributions.health, 40, 1e-9, "1040 - 1040/1.04")
 end)
+
+T.test("conditions: weapons, shield, combined", function()
+	local ns = load()
+	local d = synth({
+		T1("wm", { { stat = "meleeCrit", op = "flat", weapons = { "axe", "polearm" }, perRank = { 5, 10, 15 } } }),
+		T1("sh", { { stat = "block", op = "flat", shield = true, perRank = { 1, 2, 3 } } }),
+		T1("combo", { { stat = "dodge", op = "flat", forms = { "cat" }, weapons = { "sword" }, perRank = { 1, 2, 3 } } }),
+	})
+	local base = { meleeCrit = 10, block = 5, dodge = 4 }
+	local function v(extra) local t = {} for k, x in pairs(base) do t[k] = x end for k, x in pairs(extra) do t[k] = x end return t end
+	local b = ns.Calc.Breakdown(v({ mainHand = "axe" }), { wm = 1 }, d)
+	T.eq(b.talents.wm.contributions.meleeCrit, 5)
+	b = ns.Calc.Breakdown(v({ mainHand = "sword" }), { wm = 1 }, d)
+	T.eq(b.talents.wm.contributions.meleeCrit, nil); T.eq(b.talents.wm.inactive.meleeCrit, 5)
+	T.eq(b.stats.meleeCrit.talentTotal, 0)
+	local p = b.stats.meleeCrit.parts[1]
+	T.eq(p.inactive, true); T.eq(p.weapons[2], "polearm")
+	b = ns.Calc.Breakdown(v({ offHand = "shield" }), { sh = 2 }, d)
+	T.eq(b.talents.sh.contributions.block, 2)
+	b = ns.Calc.Breakdown(v({ offHand = "offhand" }), { sh = 2 }, d)
+	T.eq(b.talents.sh.inactive.block, 2); T.eq(b.stats.block.parts[1].shield, true)
+	b = ns.Calc.Breakdown(v({ form = "cat", mainHand = "sword" }), { combo = 3 }, d)
+	T.eq(b.talents.combo.contributions.dodge, 3)
+	b = ns.Calc.Breakdown(v({ form = "cat", mainHand = "axe" }), { combo = 3 }, d)
+	T.eq(b.talents.combo.inactive.dodge, 3, "weapon fails")
+	b = ns.Calc.Breakdown(v({ form = "bear", mainHand = "sword" }), { combo = 3 }, d)
+	T.eq(b.talents.combo.inactive.dodge, 3, "form fails")
+	local n = ns.Calc.NextPoint(v({ mainHand = "sword" }), { wm = 0 }, d, "wm")
+	T.eq(n.inactiveDeltas.meleeCrit, 5); T.eq(n.inactiveConds.meleeCrit.weapons[1], "axe")
+end)

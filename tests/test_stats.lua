@@ -134,3 +134,52 @@ T.test("Stats.Read new values: missing API nil, secret flagged", function()
 	r = ns.Stats.Read()
 	T.eq(r.secret, true); T.eq(r.ok, false)
 end)
+
+local function items(map)
+	-- map: slot -> { classID, subClassID }; item id = slot * 100
+	_G.GetInventoryItemID = function(_, slot) return map[slot] and slot * 100 or nil end
+	_G.C_Item = { GetItemInfoInstant = function(id)
+		local m = map[id / 100]
+		return id, "t", "s", "loc", 1, m[1], m[2]
+	end }
+end
+
+T.test("Stats.Read block and defense", function()
+	local ns = load()
+	fullApi()
+	_G.GetBlockChance = function() return 12.5 end
+	_G.UnitDefense = function() return 25, 3 end
+	local v = ns.Stats.Read().values
+	T.eq(v.block, 12.5); T.eq(v.defense, 28)
+end)
+
+T.test("Stats.Read weapon kinds", function()
+	local ns = load()
+	fullApi()
+	local cases = {
+		{ { [16] = { 2, 1 } }, "axe", nil },
+		{ { [16] = { 2, 8 } }, "sword", nil },
+		{ { [16] = { 2, 7 }, [17] = { 4, 6 } }, "sword", "shield" },
+		{ { [16] = { 2, 4 }, [17] = { 4, 0 } }, "mace", "offhand" },
+		{ { [16] = { 2, 15 }, [17] = { 2, 13 } }, "dagger", "fist" },
+		{ { [16] = { 2, 99 } }, "weapon:99", nil },
+		{ {}, nil, nil },
+	}
+	for i, c in ipairs(cases) do
+		items(c[1])
+		local v = ns.Stats.Read().values
+		T.eq(v.mainHand, c[2], "main " .. i); T.eq(v.offHand, c[3], "off " .. i)
+	end
+	T.eq(ns.Stats.WEAPONS[6], "polearm"); T.eq(ns.Stats.WEAPONS[10], "staff")
+end)
+
+T.test("Stats.Read equipment: missing API, secret", function()
+	local ns = load()
+	fullApi()
+	local r = ns.Stats.Read()
+	T.truthy(r.ok); T.eq(r.values.mainHand, nil)
+	items({ [16] = { 2, 1 } })
+	_G.issecretvalue = function(v) return v == 1600 end
+	r = ns.Stats.Read()
+	T.eq(r.secret, true); T.eq(r.ok, false)
+end)
