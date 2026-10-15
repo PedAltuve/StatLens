@@ -183,3 +183,61 @@ T.test("Stats.Read equipment: missing API, secret", function()
 	r = ns.Stats.Read()
 	T.eq(r.secret, true); T.eq(r.ok, false)
 end)
+
+T.test("Stats.Read AP/defense: plain components still sum", function()
+	local ns = load()
+	fullApi()
+	_G.UnitAttackPower = function() return 100, 20, -5 end
+	_G.UnitDefense = function() return 300, 12 end
+	local r = ns.Stats.Read()
+	T.truthy(r.ok); T.eq(r.values.ap, 115); T.eq(r.values.defense, 312)
+end)
+
+T.test("Stats.Read AP with only a non-base component secret", function()
+	for _, secretAt in ipairs({ 2, 3 }) do
+		local ns = load()
+		fullApi()
+		_G.UnitAttackPower = function() return 100, secretAt == 2 and 777 or 20, secretAt == 3 and 888 or -5 end
+		_G.issecretvalue = function(v) return v == 777 or v == 888 end
+		local ok, r = pcall(ns.Stats.Read)
+		T.truthy(ok, "no error " .. secretAt)
+		T.eq(r.ok, false, "ok " .. secretAt); T.eq(r.secret, true, "secret " .. secretAt)
+	end
+end)
+
+T.test("Stats.Read defense with only the modifier secret", function()
+	local ns = load()
+	fullApi()
+	_G.UnitDefense = function() return 300, 555 end
+	_G.issecretvalue = function(v) return v == 555 end
+	local ok, r = pcall(ns.Stats.Read)
+	T.truthy(ok, "no error")
+	T.eq(r.ok, false); T.eq(r.secret, true)
+end)
+
+T.test("Stats.Read slotKind: secret subClassID or classID is flagged, not used", function()
+	local cases = {
+		{ "subClassID", function(id) return id, "t", "s", "loc", 1, 2, 999 end },
+		{ "classID", function(id) return id, "t", "s", "loc", 1, 999, 1 end },
+	}
+	for _, c in ipairs(cases) do
+		local ns = load()
+		fullApi()
+		_G.GetInventoryItemID = function(_, slot) return slot == 16 and 1600 or nil end
+		_G.C_Item = { GetItemInfoInstant = c[2] }
+		_G.issecretvalue = function(v) return v == 999 end
+		local ok, r = pcall(ns.Stats.Read)
+		T.truthy(ok, "no error " .. c[1])
+		T.eq(r.ok, false, "ok " .. c[1]); T.eq(r.secret, true, "secret " .. c[1])
+	end
+end)
+
+T.test("Stats.Read slotKind: secret classID on off hand slot", function()
+	local ns = load()
+	fullApi()
+	_G.GetInventoryItemID = function(_, slot) return slot == 17 and 1700 or nil end
+	_G.C_Item = { GetItemInfoInstant = function(id) return id, "t", "s", "loc", 1, 999, 6 end }
+	_G.issecretvalue = function(v) return v == 999 end
+	local ok, r = pcall(ns.Stats.Read)
+	T.truthy(ok); T.eq(r.secret, true)
+end)
