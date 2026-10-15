@@ -103,7 +103,7 @@ git tag -a v0.2.0 -m "v0.2.0"
 git push origin v0.2.0
 ```
 
-Repository secrets: `CF_API_TOKEN` (CurseForge) and `WAGO_API_TOKEN` (Wago). Project IDs go in `StatLens.toc` as `## X-Curse-Project-ID:` and `## X-Wago-ID:`.
+Repository secrets: `CF_API_KEY` (CurseForge) and `WAGO_API_TOKEN` (Wago). Project IDs go in `StatLens.toc` as `## X-Curse-Project-ID:` and `## X-Wago-ID:`.
 
 ## Development
 
