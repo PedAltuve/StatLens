@@ -84,12 +84,3 @@ Talent data lives in `Data/Shaman.lua`. Logic (`Calc.lua`, `Format.lua`) is pure
 7. Hover a talent: `Now` and `Next point` lines appear once (not duplicated).
 8. Spend a point: panel and tooltip refresh.
 9. Enter combat: panel dims with `Frozen in combat`; leaving combat refreshes it.
-
-### Druid checklist
-
-1. `/sl talents` on a druid: taken Feral talents listed with correct ranks; `missing` empty.
-2. `/sl form` in caster, Cat, Bear (and Dire Bear) Form: ids map to `nil`, `cat`, `bear`. Report any `form:<id>`.
-3. Cat Form: Strength shows the Heart of the Wild share; Stamina shows a grey `in Bear Form` line.
-4. Bear Form: the reverse; the panel refreshes on shapeshift without reopening the window.
-5. Predatory Strikes: Attack Power part equals 150% of your level at 3/3.
-6. Hover Strength, Stamina, Attack Power, Critical Strike, Dodge and Armor rows: talent lines appear once.
