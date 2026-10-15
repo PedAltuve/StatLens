@@ -6,6 +6,13 @@ ns.Stats = Stats
 -- GetShapeshiftFormID -> short form name used by `forms` in talent data.
 Stats.FORMS = { [1] = "cat", [5] = "bear", [8] = "bear", [31] = "moonkin" }
 
+-- Weapon subclass (classID 2) -> short kind used by `weapons` in talent data.
+Stats.WEAPONS = {
+	[0] = "axe", [1] = "axe", [4] = "mace", [5] = "mace", [6] = "polearm", [7] = "sword", [8] = "sword",
+	[10] = "staff", [13] = "fist", [15] = "dagger", [2] = "bow", [3] = "gun", [18] = "crossbow",
+	[19] = "wand", [16] = "thrown",
+}
+
 -- Call fn(...) under pcall; return all results, or nothing on error / missing API.
 local function try(fn, ...)
 	if type(fn) ~= "function" then return end
@@ -16,6 +23,18 @@ end
 local function formName(id)
 	if id == nil or id == 0 then return nil end
 	return Stats.FORMS[id] or ("form:" .. tostring(id))
+end
+
+-- Kind of the item in an equipment slot: weapon kind, "shield", "offhand", or nil. A secret id is
+-- returned raw so Read() can flag it.
+local function slotKind(slot)
+	local id = try(GetInventoryItemID, "player", slot)
+	if id == nil then return nil end
+	if ns.IsSecret(id) then return id end
+	local info = C_Item and C_Item.GetItemInfoInstant
+	local _, _, _, _, _, classID, subClassID = try(info, id)
+	if classID == 2 then return Stats.WEAPONS[subClassID] or ("weapon:" .. tostring(subClassID)) end
+	if slot == 17 and classID == 4 then return subClassID == 6 and "shield" or "offhand" end
 end
 
 local function readValues()
@@ -59,6 +78,15 @@ local function readValues()
 	v.heal = try(GetSpellBonusHealing)
 	local _, armor = try(UnitArmor, "player")
 	v.armor = armor
+
+	v.block = try(GetBlockChance)
+	local defBase, defMod = try(UnitDefense, "player")
+	if defBase ~= nil and defMod ~= nil then
+		if ns.IsSecret(defBase) or ns.IsSecret(defMod) then v.defense = defBase else v.defense = defBase + defMod end
+	end
+
+	v.mainHand = slotKind(16)
+	v.offHand = slotKind(17)
 
 	local formID = try(GetShapeshiftFormID)
 	Stats.formID = formID

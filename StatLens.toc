@@ -8,6 +8,7 @@
 Core.lua
 Data/Shaman.lua
 Data/Druid.lua
+Data/Warrior.lua
 Talents.lua
 Stats.lua
 Calc.lua

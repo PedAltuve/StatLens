@@ -2,7 +2,7 @@
 
 WoW: Forever addon that explains how your talents change your character stats.
 
-Supported: Shaman and Druid, all three talent trees each. enUS client, Interface 16001 (beta build 1.60.1.70338).
+Supported: Shaman, Druid and Warrior, all three talent trees each. enUS client, Interface 16001 (beta build 1.60.1.70338).
 
 Talents that change character sheet stats:
 
@@ -14,10 +14,17 @@ Talents that change character sheet stats:
 | Druid | Balance | Nature's Majesty, Nature's Reach (hit), Moonkin Form (crit aura) |
 | Druid | Feral Combat | Heart of the Wild, Feral Swiftness, Thick Hide, Sharpened Claws, Predatory Strikes, Leader of the Pack, Natural Instinct, Natural Reaction |
 | Druid | Restoration | Living Spirit (Spirit) |
+| Warrior | Arms | Deflection (parry), Weaponmaster (crit with an Axe or Polearm) |
+| Warrior | Fury | Cruelty (crit) |
+| Warrior | Protection | Shield Specialization (block with a shield), Anticipation (defense, plus 0.04% dodge, parry and block per point) |
 
 Every other talent is listed too, so its tooltip explains it even though it does not change the sheet.
 
 Party auras (Leader of the Pack, Moonkin Form) are attributed to your talent; if a groupmate provides the same aura, the client total already includes it.
+
+Conditional talents depend on your form (Druid) or equipment (Warrior main-hand weapon type, shield). When the condition is not met, the effect is shown in grey with its value under that condition, and it is not counted in the talent total.
+
+Anticipation's 0.04% per Defense point is the Classic rule and is not yet confirmed on Forever.
 
 ## What it shows
 

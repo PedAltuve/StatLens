@@ -5,14 +5,14 @@ ns.Format = Format
 
 local ORDER = {
 	"health", "str", "agi", "stam", "int", "spirit", "ap", "sp", "heal", "hit", "spellHit",
-	"meleeCrit", "spellCrit", "dodge", "parry", "armor",
+	"meleeCrit", "spellCrit", "defense", "dodge", "parry", "block", "armor",
 }
 local LABELS = {
 	int = "Intellect", stam = "Stamina", agi = "Agility", str = "Strength", ap = "Attack Power",
-	spirit = "Spirit", hit = "Melee Hit", spellHit = "Spell Hit", health = "Health",
+	spirit = "Spirit", defense = "Defense", block = "Block", hit = "Melee Hit", spellHit = "Spell Hit", health = "Health",
 	sp = "Spell Power", heal = "Spell Healing", armor = "Armor", meleeCrit = "Melee Crit", spellCrit = "Spell Crit", dodge = "Dodge", parry = "Parry",
 }
-local PERCENT = { hit = true, spellHit = true, meleeCrit = true, spellCrit = true, dodge = true, parry = true }
+local PERCENT = { block = true, hit = true, spellHit = true, meleeCrit = true, spellCrit = true, dodge = true, parry = true }
 
 local function num(stat, x)
 	if PERCENT[stat] then return ("%.1f%%"):format(x) end
@@ -28,6 +28,26 @@ local function formText(forms)
 	if #names == 0 then return "other forms" end
 	return table.concat(names, " or ") .. " Form"
 end
+
+local function weaponText(weapons)
+	local names = {}
+	for i, w in ipairs(weapons) do names[i] = w:sub(1, 1):upper() .. w:sub(2) end
+	local article = names[1]:find("^[AEIOU]") and "an" or "a"
+	return article .. " " .. table.concat(names, " or ")
+end
+
+-- Why a bonus is inactive, e.g. "in Cat Form", "with an Axe or Polearm", "with a shield".
+-- `cond` is anything carrying forms / weapons / shield (an effect, a part, an inactiveConds entry).
+local function conditionText(cond)
+	local parts = {}
+	if cond and cond.forms then parts[#parts + 1] = "in " .. formText(cond.forms) end
+	if cond and cond.weapons and #cond.weapons > 0 then parts[#parts + 1] = "with " .. weaponText(cond.weapons) end
+	if cond and cond.shield then parts[#parts + 1] = "with a shield" end
+	if #parts == 0 then return "in other forms" end
+	return table.concat(parts, " and ")
+end
+
+local function capitalize(text) return text:sub(1, 1):upper() .. text:sub(2) end
 
 local function ratioOf(talent, stat, rank)
 	for _, e in ipairs(talent.effects or {}) do
@@ -66,8 +86,8 @@ function Format.Lines(breakdown, ranks, classData)
 				local name = p.name .. (t and t.inferred and "*" or "")
 				if t and t.inferred then inferred = true end
 				if p.inactive then
-					local text = p.op == "enables" and ("%s: enables %s in %s"):format(name, LABELS[stat], formText(p.forms))
-						or ("%s %d/%d: +%s in %s"):format(name, rank, t and t.maxRank or rank, num(stat, p.amount), formText(p.forms))
+					local text = p.op == "enables" and ("%s: enables %s %s"):format(name, LABELS[stat], conditionText(p))
+						or ("%s %d/%d: +%s %s"):format(name, rank, t and t.maxRank or rank, num(stat, p.amount), conditionText(p))
 					add(text, 1, "inactive")
 				elseif p.op == "enables" then
 					add(("%s: enables %s (%s)"):format(name, LABELS[stat], num(stat, s.total or 0)), 1, "part")
@@ -133,10 +153,10 @@ local function partName(breakdown, stat, key)
 	return key
 end
 
-local function partFormsFor(breakdown, stat, key)
+local function partCondFor(breakdown, stat, key)
 	local st = breakdown and breakdown.stats and breakdown.stats[stat]
 	for _, p in ipairs(st and st.parts or {}) do
-		if p.key == key and p.inactive then return p.forms end
+		if p.key == key and p.inactive then return p end
 	end
 end
 
@@ -180,7 +200,7 @@ function Format.TooltipLines(entry, rank, breakdown, nextPoint)
 			for _, stat in ipairs(ORDER) do
 				local amount = now.inactive and now.inactive[stat]
 				if amount then
-					add(("In %s: +%s %s"):format(formText(partFormsFor(breakdown, stat, entry.key)), num(stat, amount), LABELS[stat]), GREY)
+					add(("%s: +%s %s"):format(capitalize(conditionText(partCondFor(breakdown, stat, entry.key))), num(stat, amount), LABELS[stat]), GREY)
 				end
 			end
 		end
@@ -205,11 +225,11 @@ function Format.TooltipLines(entry, rank, breakdown, nextPoint)
 			for _, stat in ipairs(ORDER) do
 				local delta = nextPoint.inactiveDeltas and nextPoint.inactiveDeltas[stat]
 				if delta == "enables" then
-					add(("Next point (%d/%d): enables %s in %s%s"):format(nextPoint.nextRank, entry.maxRank, LABELS[stat],
-						formText(nextPoint.inactiveForms[stat]), mark), GREY)
+					add(("Next point (%d/%d): enables %s %s%s"):format(nextPoint.nextRank, entry.maxRank, LABELS[stat],
+						conditionText(nextPoint.inactiveConds[stat]), mark), GREY)
 				elseif delta then
-					add(("Next point (%d/%d): +%s %s in %s%s"):format(nextPoint.nextRank, entry.maxRank, num(stat, delta),
-						LABELS[stat], formText(nextPoint.inactiveForms[stat]), mark), GREY)
+					add(("Next point (%d/%d): +%s %s %s%s"):format(nextPoint.nextRank, entry.maxRank, num(stat, delta),
+						LABELS[stat], conditionText(nextPoint.inactiveConds[stat]), mark), GREY)
 				end
 			end
 		elseif rank >= entry.maxRank then
@@ -292,7 +312,7 @@ function Format.StatTooltipLines(statKey, breakdown, classData, ranks)
 	for _, p in ipairs(stat and stat.parts or {}) do
 		local t = byKey[p.key]
 		if t and p.inactive then
-			out[#out + 1] = ("%sIn %s: +%s (%s)%s"):format(C_GREY, formText(p.forms), num(statKey, p.amount), tag(t, rankOf(t)), C_END)
+			out[#out + 1] = ("%s%s: +%s (%s)%s"):format(C_GREY, capitalize(conditionText(p)), num(statKey, p.amount), tag(t, rankOf(t)), C_END)
 		end
 	end
 	return out

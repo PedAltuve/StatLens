@@ -9,14 +9,21 @@ local function find(classData, key)
 	end
 end
 
--- An effect applies unless it is gated to forms the player is not in.
-local function isActive(e, values)
-	if not e.forms then return true end
-	for _, f in ipairs(e.forms) do
-		if f == values.form then return true end
+local function listHas(list, value)
+	for _, x in ipairs(list) do
+		if x == value then return true end
 	end
 	return false
 end
+
+-- An effect applies only if every condition it carries (forms, weapons, shield) holds.
+local function conditionsMet(e, values)
+	if e.forms and not listHas(e.forms, values.form) then return false end
+	if e.weapons and not listHas(e.weapons, values.mainHand) then return false end
+	if e.shield and values.offHand ~= "shield" then return false end
+	return true
+end
+Calc.ConditionsMet = conditionsMet
 
 -- Active stat talents: rank > 0, clamped to maxRank.
 local function active(ranks, classData)
@@ -55,7 +62,8 @@ function Calc.Breakdown(values, ranks, classData)
 		local s, e = statEntry(effect.stat), talentEntry(a)
 		s.parts[#s.parts + 1] = {
 			key = a.t.key, name = a.t.name, amount = amount, op = effect.op,
-			forms = effect.forms, inactive = (not isActiveEffect) or nil,
+			forms = effect.forms, weapons = effect.weapons, shield = effect.shield,
+			inactive = (not isActiveEffect) or nil,
 		}
 		if isActiveEffect then
 			s.talentTotal = s.talentTotal + amount
@@ -72,7 +80,7 @@ function Calc.Breakdown(values, ranks, classData)
 				i = i + 1
 				local e = a.t.effects[i]
 				if not e then return end
-				if e.op == op and values[e.stat] ~= nil then return e, isActive(e, values) end
+				if e.op == op and values[e.stat] ~= nil then return e, conditionsMet(e, values) end
 			end
 		end
 	end
@@ -155,11 +163,11 @@ function Calc.NextPoint(values, ranks, classData, key)
 	local r = math.min(ranks and ranks[key] or 0, t.maxRank)
 	if r >= t.maxRank then return nil end
 
-	local res = { rank = r, nextRank = r + 1, deltas = {}, chained = {}, inactiveDeltas = {}, inactiveForms = {} }
+	local res = { rank = r, nextRank = r + 1, deltas = {}, chained = {}, inactiveDeltas = {}, inactiveForms = {}, inactiveConds = {} }
 	local current = active(ranks, classData)
 
 	for _, e in ipairs(t.effects) do
-		local on = isActive(e, values)
+		local on = conditionsMet(e, values)
 		local into = on and res.deltas or res.inactiveDeltas
 		local function put(amount)
 			if type(amount) == "number" then
@@ -167,7 +175,10 @@ function Calc.NextPoint(values, ranks, classData, key)
 			else
 				into[e.stat] = amount
 			end
-			if not on then res.inactiveForms[e.stat] = e.forms end
+			if not on then
+				res.inactiveForms[e.stat] = e.forms
+				res.inactiveConds[e.stat] = { forms = e.forms, weapons = e.weapons, shield = e.shield }
+			end
 		end
 
 		local total = values[e.stat]
@@ -182,7 +193,7 @@ function Calc.NextPoint(values, ranks, classData, key)
 					put(delta)
 					for _, a in ipairs(current) do
 						for _, fe in ipairs(a.t.effects) do
-							local ratio = fe.op == "fromStat" and fe.source == e.stat and isActive(fe, values) and fe.perRank[a.rank]
+							local ratio = fe.op == "fromStat" and fe.source == e.stat and conditionsMet(fe, values) and fe.perRank[a.rank]
 							if ratio and values[fe.stat] ~= nil then
 								local amount = ratio * delta
 								res.deltas[fe.stat] = (res.deltas[fe.stat] or 0) + amount
