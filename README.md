@@ -29,6 +29,24 @@ Party auras (Leader of the Pack, Moonkin Form) are attributed to your talent; if
 
 Values marked `*` use inferred per-rank numbers (only rank 1 and max rank were published). Verify them in game.
 
+## Screenshots
+
+Taken on the WoW: Forever beta with a level 25 Enhancement Shaman.
+
+**Character panel**: each stat with the talents behind it, including the Ancestral Knowledge -> Intellect -> Attack Power chain.
+
+![StatLens panel next to the character window](docs/screenshots/stat-panel.jpg)
+
+**Native stat tooltips**: talent lines appended to the game's own tooltip.
+
+![Intellect tooltip showing the Attack Power added by Mental Dexterity](docs/screenshots/intellect-tooltip.jpg)
+
+![Attack Power tooltip showing the share that comes from Intellect](docs/screenshots/attack-power-tooltip.jpg)
+
+**`/sl talents`**: talents detected from the client.
+
+![Output of /sl talents](docs/screenshots/talents-command.jpg)
+
 ## Combat
 
 WoW: Forever inherits Midnight's addon restrictions: in combat many values are secret. StatLens never computes on secret values; the panel freezes and dims in combat, and tooltips show `unavailable in combat`.
