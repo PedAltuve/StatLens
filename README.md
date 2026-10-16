@@ -2,7 +2,7 @@
 
 WoW: Forever addon that explains how your talents change your character stats.
 
-Supported: Shaman, Druid and Warrior, all three talent trees each. enUS client, Interface 16001 (beta build 1.60.1.70338).
+Supported: Shaman, Druid, Warrior and Priest, all three talent trees each. enUS client, Interface 16001 (beta build 1.60.1.70338).
 
 Talents that change character sheet stats:
 
@@ -17,6 +17,9 @@ Talents that change character sheet stats:
 | Warrior | Arms | Deflection (parry), Weaponmaster (crit with an Axe or Polearm) |
 | Warrior | Fury | Cruelty (crit) |
 | Warrior | Protection | Shield Specialization (block with a shield), Anticipation (defense, plus 0.04% dodge, parry and block per point) |
+| Priest | Discipline | Mental Strength (Intellect) |
+| Priest | Holy | Spiritual Guidance (healing and spell damage from Spirit) |
+| Priest | Shadow Magic | none (all school- or spell-specific) |
 
 Every other talent is listed too, so its tooltip explains it even though it does not change the sheet.
 
