@@ -7,6 +7,7 @@ local function load()
 	S.loadAddonFile("Data/Shaman.lua", ns)
 	S.loadAddonFile("Data/Druid.lua", ns)
 	S.loadAddonFile("Data/Warrior.lua", ns)
+	S.loadAddonFile("Data/Priest.lua", ns)
 	S.loadAddonFile("Talents.lua", ns)
 	return ns
 end
@@ -48,7 +49,7 @@ local KINDS = { stat = 1, conditional = 1, utility = 1 }
 
 T.test("data integrity (all classes)", function()
 	local ns = load()
-	local expected = { SHAMAN = 50, DRUID = 52, WARRIOR = 52 }
+	local expected = { SHAMAN = 50, DRUID = 52, WARRIOR = 52, PRIEST = 52 }
 	local classes = 0
 	for class, d in pairs(ns.Data) do
 		classes = classes + 1
@@ -72,7 +73,7 @@ T.test("data integrity (all classes)", function()
 			if t.kind == "stat" then T.truthy(t.effects and #t.effects > 0, "effects " .. id) end
 		end
 	end
-	T.eq(classes, 3)
+	T.eq(classes, 4)
 	T.eq(ns.Data.SHAMAN.tree, "Enhancement"); T.eq(ns.Data.DRUID.tree, "Feral Combat")
 end)
 
@@ -276,4 +277,44 @@ T.test("Read matches one warrior talent per tree", function()
 	T.eq(#r.unmatched, 0)
 	T.eq(ns.Talents.ByName("Cruelty").tree, "Fury")
 	T.eq(ns.Talents.ByName("Anticipation").tree, "Protection")
+end)
+
+T.test("priest: 52 unique talents, 18/17/17 split", function()
+	local ns = load()
+	local d = ns.Data.PRIEST
+	T.eq(d.tree, "Discipline"); T.eq(#d.talents, 52)
+	local names, trees = {}, {}
+	for _, t in ipairs(d.talents) do
+		T.truthy(not names[t.name], "unique name " .. t.name)
+		names[t.name] = true
+		local tree = t.tree or "Discipline"
+		trees[tree] = (trees[tree] or 0) + 1
+	end
+	T.eq(trees.Discipline, 18); T.eq(trees.Holy, 17); T.eq(trees["Shadow Magic"], 17)
+end)
+
+T.test("Read matches one priest talent per tree", function()
+	local ns = load()
+	_G.UnitClass = function() return "Priest", "PRIEST" end
+	local spells = { [1] = "Mental Strength", [2] = "Spiritual Guidance", [3] = "Shadowform" }
+	local nodes = {
+		[1] = { ID = 1, entryIDs = { 1 }, currentRank = 5 },
+		[2] = { ID = 2, entryIDs = { 2 }, currentRank = 3 },
+		[3] = { ID = 3, entryIDs = { 3 }, currentRank = 1 },
+	}
+	_G.C_ClassTalents = { GetActiveConfigID = function() return 9 end }
+	_G.C_Spell = { GetSpellName = function(id) return spells[id] end }
+	_G.C_Traits = {
+		GetConfigInfo = function() return { treeIDs = { 7 } } end,
+		GetTreeNodes = function() return { 1, 2, 3 } end,
+		GetNodeInfo = function(_, id) return nodes[id] end,
+		GetEntryInfo = function(_, e) return { definitionID = e } end,
+		GetDefinitionInfo = function(d) return { spellID = d } end,
+	}
+	local r = ns.Talents.Read()
+	T.eq(r.ranks.mentalStrength, 5); T.eq(r.ranks.spiritualGuidance, 3); T.eq(r.ranks.shadowform, 1)
+	T.eq(#r.unmatched, 0)
+	T.eq(ns.Talents.ByName("Spiritual Guidance").tree, "Holy")
+	T.eq(ns.Talents.ByName("Shadowform").tree, "Shadow Magic")
+	T.eq(ns.Talents.ByName("Improved Power Word: Shield").key, "improvedPowerWordShield")
 end)
