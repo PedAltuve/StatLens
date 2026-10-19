@@ -2,7 +2,7 @@
 
 WoW: Forever addon that explains how your talents change your character stats.
 
-Supported: Shaman, Druid, Warrior, Priest and Paladin, all three talent trees each. enUS client, Interface 16001 (beta build 1.60.1.70338).
+Supported: Shaman, Druid, Warrior, Priest, Paladin and Mage, all three talent trees each. enUS client, Interface 16001 (beta build 1.60.1.70338).
 
 Talents that change character sheet stats:
 
@@ -23,6 +23,9 @@ Talents that change character sheet stats:
 | Paladin | Holy | Divine Strength (Strength), Divine Intellect (Intellect), Holy Power (spell crit) |
 | Paladin | Protection | Precision (hit), Anticipation (defense, as Warrior), Sacred Duty (Stamina), Toughness (item armor, approximated on total armor) |
 | Paladin | Retribution | Deflection (parry), Conviction (crit), Champion of the Light (spell damage from Intellect) |
+| Mage | Arcane | Arcane Mind (Intellect), Arcane Resilience (armor from Intellect), Arcane Instability (crit) |
+| Mage | Fire | none (all school- or spell-specific) |
+| Mage | Frost | none (all school- or spell-specific) |
 
 Every other talent is listed too, so its tooltip explains it even though it does not change the sheet.
 
