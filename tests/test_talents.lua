@@ -9,6 +9,7 @@ local function load()
 	S.loadAddonFile("Data/Warrior.lua", ns)
 	S.loadAddonFile("Data/Priest.lua", ns)
 	S.loadAddonFile("Data/Paladin.lua", ns)
+	S.loadAddonFile("Data/Mage.lua", ns)
 	S.loadAddonFile("Talents.lua", ns)
 	return ns
 end
@@ -50,7 +51,7 @@ local KINDS = { stat = 1, conditional = 1, utility = 1 }
 
 T.test("data integrity (all classes)", function()
 	local ns = load()
-	local expected = { SHAMAN = 50, DRUID = 52, WARRIOR = 52, PRIEST = 52, PALADIN = 50 }
+	local expected = { SHAMAN = 50, DRUID = 52, WARRIOR = 52, PRIEST = 52, PALADIN = 50, MAGE = 55 }
 	local classes = 0
 	for class, d in pairs(ns.Data) do
 		classes = classes + 1
@@ -74,7 +75,7 @@ T.test("data integrity (all classes)", function()
 			if t.kind == "stat" then T.truthy(t.effects and #t.effects > 0, "effects " .. id) end
 		end
 	end
-	T.eq(classes, 5)
+	T.eq(classes, 6)
 	T.eq(ns.Data.SHAMAN.tree, "Enhancement"); T.eq(ns.Data.DRUID.tree, "Feral Combat")
 end)
 
@@ -357,4 +358,43 @@ T.test("Read matches one paladin talent per tree", function()
 	T.eq(#r.unmatched, 0)
 	T.eq(ns.Talents.ByName("Sacred Duty").tree, "Protection")
 	T.eq(ns.Talents.ByName("Champion of the Light").tree, "Retribution")
+end)
+
+T.test("mage: 55 unique talents, 19/17/19 split", function()
+	local ns = load()
+	local d = ns.Data.MAGE
+	T.eq(d.tree, "Arcane"); T.eq(#d.talents, 55)
+	local names, trees = {}, {}
+	for _, t in ipairs(d.talents) do
+		T.truthy(not names[t.name], "unique name " .. t.name)
+		names[t.name] = true
+		local tree = t.tree or "Arcane"
+		trees[tree] = (trees[tree] or 0) + 1
+	end
+	T.eq(trees.Arcane, 19); T.eq(trees.Fire, 17); T.eq(trees.Frost, 19)
+end)
+
+T.test("Read matches one mage talent per tree", function()
+	local ns = load()
+	_G.UnitClass = function() return "Mage", "MAGE" end
+	local spells = { [1] = "Arcane Mind", [2] = "Critical Mass", [3] = "Shatter" }
+	local nodes = {
+		[1] = { ID = 1, entryIDs = { 1 }, currentRank = 5 },
+		[2] = { ID = 2, entryIDs = { 2 }, currentRank = 3 },
+		[3] = { ID = 3, entryIDs = { 3 }, currentRank = 2 },
+	}
+	_G.C_ClassTalents = { GetActiveConfigID = function() return 9 end }
+	_G.C_Spell = { GetSpellName = function(id) return spells[id] end }
+	_G.C_Traits = {
+		GetConfigInfo = function() return { treeIDs = { 7 } } end,
+		GetTreeNodes = function() return { 1, 2, 3 } end,
+		GetNodeInfo = function(_, id) return nodes[id] end,
+		GetEntryInfo = function(_, e) return { definitionID = e } end,
+		GetDefinitionInfo = function(d) return { spellID = d } end,
+	}
+	local r = ns.Talents.Read()
+	T.eq(r.ranks.arcaneMind, 5); T.eq(r.ranks.criticalMass, 3); T.eq(r.ranks.shatter, 2)
+	T.eq(#r.unmatched, 0)
+	T.eq(ns.Talents.ByName("Critical Mass").tree, "Fire")
+	T.eq(ns.Talents.ByName("Shatter").tree, "Frost")
 end)
