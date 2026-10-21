@@ -35,9 +35,9 @@ T.test("Stats.Read secret value", function()
 	fullApi()
 	_G.issecretvalue = function(v) return v == 5.5 end
 	local r = ns.Stats.Read()
-	T.eq(r.ok, false); T.eq(r.secret, true)
-	T.eq(r.values.str, nil, "values left nil")
-	T.eq(r.values.meleeCrit, nil)
+	T.eq(r.ok, true); T.eq(r.secret, true); T.eq(r.secretStats.meleeCrit, true)
+	T.eq(r.values.str, 201, "plain values kept")
+	T.eq(r.values.meleeCrit, nil, "secret removed")
 end)
 
 T.test("Stats.Read missing/throwing API leaves nil", function()
@@ -93,7 +93,8 @@ T.test("Stats.Read secret form id", function()
 	_G.GetShapeshiftFormID = function() return 1 end
 	_G.issecretvalue = function(v) return v == 1 end
 	local r = ns.Stats.Read()
-	T.eq(r.secret, true); T.eq(r.ok, false)
+	T.eq(r.secret, false); T.eq(r.ok, true)
+	T.eq(r.values.form, nil, "unknown form"); T.eq(ns.Stats.formID, nil, "raw secret not kept")
 end)
 
 T.test("/sl form prints raw id and mapped name", function()
@@ -132,7 +133,7 @@ T.test("Stats.Read new values: missing API nil, secret flagged", function()
 	_G.UnitHealthMax = function() return 777 end
 	_G.issecretvalue = function(v) return v == 777 end
 	r = ns.Stats.Read()
-	T.eq(r.secret, true); T.eq(r.ok, false)
+	T.eq(r.secret, true); T.eq(r.ok, true); T.eq(r.secretStats.health, true)
 end)
 
 local function items(map)
@@ -181,7 +182,7 @@ T.test("Stats.Read equipment: missing API, secret", function()
 	items({ [16] = { 2, 1 } })
 	_G.issecretvalue = function(v) return v == 1600 end
 	r = ns.Stats.Read()
-	T.eq(r.secret, true); T.eq(r.ok, false)
+	T.eq(r.secret, false); T.eq(r.ok, true); T.eq(r.values.mainHand, nil, "secret item id -> unknown")
 end)
 
 T.test("Stats.Read AP/defense: plain components still sum", function()
@@ -201,7 +202,8 @@ T.test("Stats.Read AP with only a non-base component secret", function()
 		_G.issecretvalue = function(v) return v == 777 or v == 888 end
 		local ok, r = pcall(ns.Stats.Read)
 		T.truthy(ok, "no error " .. secretAt)
-		T.eq(r.ok, false, "ok " .. secretAt); T.eq(r.secret, true, "secret " .. secretAt)
+		T.eq(r.ok, true, "ok " .. secretAt); T.eq(r.secret, true, "secret " .. secretAt)
+		T.eq(r.secretStats.ap, true); T.eq(r.values.ap, nil)
 	end
 end)
 
@@ -212,10 +214,10 @@ T.test("Stats.Read defense with only the modifier secret", function()
 	_G.issecretvalue = function(v) return v == 555 end
 	local ok, r = pcall(ns.Stats.Read)
 	T.truthy(ok, "no error")
-	T.eq(r.ok, false); T.eq(r.secret, true)
+	T.eq(r.ok, true); T.eq(r.secret, true); T.eq(r.secretStats.defense, true); T.eq(r.values.defense, nil)
 end)
 
-T.test("Stats.Read slotKind: secret subClassID or classID is flagged, not used", function()
+T.test("Stats.Read slotKind: secret subClassID or classID is unknown, not used", function()
 	local cases = {
 		{ "subClassID", function(id) return id, "t", "s", "loc", 1, 2, 999 end },
 		{ "classID", function(id) return id, "t", "s", "loc", 1, 999, 1 end },
@@ -228,7 +230,8 @@ T.test("Stats.Read slotKind: secret subClassID or classID is flagged, not used",
 		_G.issecretvalue = function(v) return v == 999 end
 		local ok, r = pcall(ns.Stats.Read)
 		T.truthy(ok, "no error " .. c[1])
-		T.eq(r.ok, false, "ok " .. c[1]); T.eq(r.secret, true, "secret " .. c[1])
+		T.eq(r.ok, true, "ok " .. c[1]); T.eq(r.secret, false, "not flagged " .. c[1])
+		T.eq(r.values.mainHand, nil, "unknown " .. c[1])
 	end
 end)
 
@@ -239,7 +242,7 @@ T.test("Stats.Read slotKind: secret classID on off hand slot", function()
 	_G.C_Item = { GetItemInfoInstant = function(id) return id, "t", "s", "loc", 1, 999, 6 end }
 	_G.issecretvalue = function(v) return v == 999 end
 	local ok, r = pcall(ns.Stats.Read)
-	T.truthy(ok); T.eq(r.secret, true)
+	T.truthy(ok); T.eq(r.secret, false); T.eq(r.values.offHand, nil)
 end)
 
 T.test("Stats.Read ranged AP and crit", function()
@@ -263,8 +266,8 @@ T.test("Stats.Read secret ranged positive buff only", function()
 	_G.issecretvalue = function(v) return v == secret end
 	local okCall, r = pcall(ns.Stats.Read)
 	T.truthy(okCall, "no arithmetic on secret")
-	T.eq(r.ok, false); T.eq(r.secret, true)
-	T.eq(r.values.rangedAp, nil)
+	T.eq(r.ok, true); T.eq(r.secret, true); T.eq(r.secretStats.rangedAp, true)
+	T.eq(r.values.rangedAp, nil); T.eq(r.values.rangedCrit, 7.5)
 end)
 
 T.test("Stats.Read secret ranged crit", function()
@@ -274,7 +277,7 @@ T.test("Stats.Read secret ranged crit", function()
 	_G.GetRangedCritChance = function() return 7.25 end
 	_G.issecretvalue = function(v) return v == 7.25 end
 	local r = ns.Stats.Read()
-	T.eq(r.ok, false); T.eq(r.secret, true)
+	T.eq(r.ok, true); T.eq(r.secret, true); T.eq(r.secretStats.rangedCrit, true)
 end)
 
 T.test("Stats.Read missing/throwing ranged API leaves nil", function()
@@ -397,10 +400,18 @@ local function recorder(secret)
 	return api, checked
 end
 
-local function readSecret(ns)
+-- `key` is the stat expected in secretStats; nil means a condition input (never flagged).
+local function readSecret(ns, key)
 	local okCall, r = pcall(ns.Stats.Read)
 	T.truthy(okCall, "secret never inspected: " .. tostring(r))
-	if okCall then T.eq(r.ok, false); T.eq(r.secret, true) end
+	if not okCall then return end
+	T.eq(r.ok, true)
+	if key then
+		T.eq(r.secret, true); T.eq(r.secretStats[key], true, key .. " flagged"); T.eq(r.values[key], nil)
+	else
+		T.eq(r.secret, false)
+	end
+	return r
 end
 
 T.test("secret order: AP with only the negative buff secret", function()
@@ -411,7 +422,7 @@ T.test("secret order: AP with only the negative buff secret", function()
 		local api, checked = recorder(secret)
 		local p = pos ~= NIL and pos or nil
 		_G.UnitAttackPower = api("<AP>", function() return 100, p, secret end)
-		readSecret(ns)
+		readSecret(ns, "ap")
 		checked("<AP>", { 100, pos, secret })
 	end
 end)
@@ -424,7 +435,7 @@ T.test("secret order: ranged AP with only the base secret", function()
 		local api, checked = recorder(secret)
 		local p = pos ~= NIL and pos or nil
 		_G.UnitRangedAttackPower = api("<RAP>", function() return secret, p, -8 end)
-		readSecret(ns)
+		readSecret(ns, "rangedAp")
 		checked("<RAP>", { secret })
 	end
 end)
@@ -437,7 +448,7 @@ T.test("secret order: defense with only the base secret", function()
 		local api, checked = recorder(secret)
 		local m = mod ~= NIL and mod or nil
 		_G.UnitDefense = api("<DEF>", function() return secret, m end)
-		readSecret(ns)
+		readSecret(ns, "defense")
 		checked("<DEF>", { secret })
 	end
 end)
@@ -451,7 +462,7 @@ T.test("secret order: spell power with one school secret mid-loop", function()
 	local markers = {}
 	for school = 2, 7 do markers[school] = "<SP" .. school .. ">" end
 	_G.GetSpellBonusDamage = function(school) return api(markers[school], function() return by[school] end)() end
-	readSecret(ns)
+	readSecret(ns, "sp")
 	checked(markers[2], { 20 }); checked(markers[3], { NIL }); checked(markers[4], { 40 })
 	checked(markers[5], { secret })
 end)
@@ -486,6 +497,75 @@ T.test("secret order: equipped item id is checked before any nil test", function
 	_G.GetInventoryItemID = function(_, slot)
 		return api("<ITEM" .. slot .. ">", function() if slot == 17 then return secret end end)()
 	end
-	readSecret(ns)
+	local r = readSecret(ns)
 	checked("<ITEM16>", { NIL }); checked("<ITEM17>", { secret })
+	T.eq(r.values.mainHand, nil); T.eq(r.values.offHand, nil)
+end)
+
+T.test("per-stat: only health secret keeps the rest", function()
+	local ns = load()
+	fullApi()
+	_G.UnitHealthMax = function() return 777 end
+	_G.issecretvalue = function(v) return v == 777 end
+	local r = ns.Stats.Read()
+	T.eq(r.ok, true); T.eq(r.secret, true)
+	T.eq(r.secretStats.health, true); T.eq(r.values.health, nil)
+	local n = 0
+	for _ in pairs(r.secretStats) do n = n + 1 end
+	T.eq(n, 1, "only health flagged")
+	T.eq(r.values.str, 201); T.eq(r.values.ap, 115); T.eq(r.values.sp, 70); T.eq(r.values.meleeCrit, 5.5)
+end)
+
+T.test("per-stat: plain read has an empty secretStats", function()
+	local ns = load()
+	fullApi()
+	local r = ns.Stats.Read()
+	T.eq(r.ok, true); T.eq(r.secret, false); T.eq(next(r.secretStats), nil)
+end)
+
+T.test("per-stat: every displayable stat secret -> not ok", function()
+	local ns = load()
+	fullApi()
+	_G.GetSpellBonusHealing = function() return 9 end
+	_G.UnitArmor = function() return 1, 2 end
+	_G.GetHitModifier = function() return 1 end
+	_G.UnitHealthMax = function() return 100 end
+	_G.UnitRangedAttackPower = function() return 1, 2, 3 end
+	_G.UnitLevel = function() return 30 end
+	_G.issecretvalue = function(v) return type(v) == "number" end
+	local okCall, r = pcall(ns.Stats.Read)
+	T.truthy(okCall, tostring(r))
+	T.eq(r.ok, false); T.eq(r.secret, true)
+	T.eq(r.secretStats.health, true); T.eq(r.secretStats.str, true)
+	T.eq(r.secretStats.level, nil, "level is not a displayed stat")
+	for k, x in pairs(r.values) do T.truthy(type(x) ~= "number", "no secret left: " .. k) end
+end)
+
+T.test("per-stat: no stats at all and nothing secret stays ok", function()
+	local ns = load()
+	local r = ns.Stats.Read()
+	T.eq(r.ok, true); T.eq(r.secret, false)
+end)
+
+T.test("per-stat: secret level is unknown, not flagged", function()
+	local ns = load()
+	fullApi()
+	_G.UnitLevel = function() return 25 end
+	_G.issecretvalue = function(v) return v == 25 end
+	local r = ns.Stats.Read()
+	T.eq(r.ok, true); T.eq(r.secret, false)
+	T.eq(r.values.level, nil); T.eq(r.secretStats.level, nil)
+end)
+
+T.test("per-stat: Calc skips a fromStat part whose source is secret", function()
+	local ns = load()
+	fullApi()
+	_G.issecretvalue = function(v) return v == 204 end -- int
+	local r = ns.Stats.Read()
+	T.eq(r.ok, true); T.eq(r.secretStats.int, true)
+	S.loadAddonFile("Data/Shaman.lua", ns)
+	S.loadAddonFile("Calc.lua", ns)
+	local b = ns.Calc.Breakdown(r.values, { mentalDexterity = 3, ancestralKnowledge = 5 }, ns.Data.SHAMAN)
+	T.eq(b.talents.mentalDexterity, nil, "no AP from unreadable Intellect")
+	T.eq(b.stats.int, nil); T.eq(b.stats.ap, nil)
 end)

@@ -74,7 +74,8 @@ end)
 
 T.test("secret stats -> combat line only", function()
 	local ns, cb = setup()
-	_G.issecretvalue = function() return true end
+	-- Every stat secret; the spellID itself stays plain (a secret spellID adds nothing at all).
+	_G.issecretvalue = function(v) return type(v) == "number" and v ~= 101 end
 	cb(GameTooltip, { id = 101 })
 	T.eq(#GameTooltip.lines, 2)
 	T.eq(GameTooltip.lines[2], "StatLens: unavailable in combat")
@@ -107,4 +108,44 @@ T.test("toggle off adds nothing; /sl tooltip toggles", function()
 	T.eq(#GameTooltip.lines, 0)
 	SlashCmdList.STATLENS("tooltip")
 	T.eq(StatLensDB.tooltip, true)
+end)
+
+T.test("affected secret stat adds an unavailable line", function()
+	local ns, cb = setup()
+	_G.UnitStat = function(_, i) return i == 4 and 999 or 341, i == 4 and 999 or 341 end
+	_G.issecretvalue = function(v) return v == 999 end
+	cb(GameTooltip, { id = 101 })
+	T.eq(GameTooltip.lines[2], "StatLens")
+	T.eq(GameTooltip.lines[#GameTooltip.lines], "StatLens: Intellect unavailable right now")
+end)
+
+T.test("unrelated secret stat adds no unavailable line", function()
+	local ns, cb = setup()
+	_G.UnitHealthMax = function() return 777 end
+	_G.issecretvalue = function(v) return v == 777 end
+	cb(GameTooltip, { id = 101 })
+	for _, l in ipairs(GameTooltip.lines) do T.truthy(not l:find("unavailable", 1, true), l) end
+	T.eq(GameTooltip.lines[3], "Now: +" .. ("%d"):format(math.floor(341 - 341 / 1.04 + 0.5)) .. " Intellect")
+end)
+
+T.test("secret spellID adds nothing without raising", function()
+	local ns, cb = setup()
+	StatLensDB.debug = true
+	local function trap() error("secret spellID inspected", 2) end
+	local secret = setmetatable({}, { __eq = trap, __lt = trap, __le = trap, __index = trap, __concat = trap })
+	local seen = false
+	_G.issecretvalue = function(v) if rawequal(v, secret) then seen = true return true end return false end
+	cb(GameTooltip, { id = secret })
+	T.truthy(seen, "checked with IsSecret")
+	T.eq(#GameTooltip.lines, 0)
+	for _, m in ipairs(S.chat) do T.truthy(not m:find("tooltip error", 1, true), m) end
+end)
+
+T.test("append checks IsSecret before testing spellID", function()
+	local ns, cb = setup()
+	local log = {}
+	_G.issecretvalue = function(v) log[#log + 1] = v == nil and "nil" or v return false end
+	cb(GameTooltip, { id = nil })
+	T.eq(log[1], "nil", "IsSecret ran on the nil spellID first")
+	T.eq(#GameTooltip.lines, 0)
 end)

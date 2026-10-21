@@ -13,6 +13,10 @@ local LABELS = {
 	sp = "Spell Power", heal = "Spell Healing", armor = "Armor", meleeCrit = "Melee Crit", spellCrit = "Spell Crit", dodge = "Dodge", parry = "Parry",
 	rangedAp = "Ranged Attack Power", rangedCrit = "Ranged Crit",
 }
+Format.ORDER = ORDER
+
+function Format.Label(stat) return LABELS[stat] or stat end
+
 local PERCENT = { block = true, hit = true, spellHit = true, meleeCrit = true, rangedCrit = true, spellCrit = true, dodge = true, parry = true }
 
 local function num(stat, x)

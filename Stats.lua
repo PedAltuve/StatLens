@@ -38,17 +38,16 @@ local function firstSecret(...)
 	return false
 end
 
--- Kind of the item in an equipment slot: weapon kind, "shield", "offhand", or nil. A secret id is
--- returned raw so Read() can flag it.
+-- Kind of the item in an equipment slot: weapon kind, "shield", "offhand", or nil. A secret id,
+-- classID or subClassID means unknown (nil), like an empty slot; it is a condition input, not a stat.
 local function slotKind(slot)
 	local id = try(GetInventoryItemID, "player", slot)
-	if ns.IsSecret(id) then return id end
+	if ns.IsSecret(id) then return nil end
 	if id == nil then return nil end
 	local info = C_Item and C_Item.GetItemInfoInstant
 	local _, _, _, _, _, classID, subClassID = try(info, id)
-	-- Never compare, concatenate or index with a secret; hand it back so Read() flags it.
-	local hasSecret, secret = firstSecret(classID, subClassID)
-	if hasSecret then return secret end
+	-- Never compare, concatenate or index with a secret.
+	if firstSecret(classID, subClassID) then return nil end
 	if classID == 2 then return Stats.WEAPONS[subClassID] or ("weapon:" .. tostring(subClassID)) end
 	if slot == 17 and classID == 4 then return subClassID == 6 and "shield" or "offhand" end
 end
@@ -98,7 +97,9 @@ local function readValues()
 	v.spellHit = try(GetSpellHitModifier)
 	v.health = try(UnitHealthMax, "player")
 
-	v.level = try(UnitLevel, "player")
+	-- Level only feeds perLevel effects: a secret level is unknown, not a frozen stat.
+	local level = try(UnitLevel, "player")
+	if ns.IsSecret(level) then v.level = nil else v.level = level end
 	v.heal = try(GetSpellBonusHealing)
 	local _, armor = try(UnitArmor, "player")
 	v.armor = armor
@@ -115,24 +116,34 @@ local function readValues()
 	v.offHand = slotKind(17)
 
 	local formID = try(GetShapeshiftFormID)
-	Stats.formID = formID
 	if ns.IsSecret(formID) then
-		-- Kept raw so Read() can flag it; never build strings from it.
-		v.form = formID
+		-- Unknown form; never keep or build strings from the secret.
+		Stats.formID, v.form = nil, nil
 	else
-		v.form = formName(formID)
+		Stats.formID, v.form = formID, formName(formID)
 	end
 	return v
 end
 
+-- Stats the panel displays; `ok` is false only when none of them is plain and at least one is secret.
+Stats.DISPLAYED = {
+	"str", "agi", "stam", "int", "spirit", "ap", "rangedAp", "sp", "heal", "meleeCrit", "rangedCrit",
+	"spellCrit", "hit", "spellHit", "dodge", "parry", "block", "defense", "armor", "health",
+}
+
+-- Secret values are removed from `values` (Calc skips nil stats) and listed in `secretStats`.
 function Stats.Read()
-	local values = readValues()
-	for _, x in pairs(values) do
+	local values, secretStats, secret = readValues(), {}, false
+	for k, x in pairs(values) do
 		if ns.IsSecret(x) then
-			return { ok = false, secret = true, values = {} }
+			values[k], secretStats[k], secret = nil, true, true
 		end
 	end
-	return { ok = true, secret = false, values = values }
+	local anyPlain = false
+	for _, k in ipairs(Stats.DISPLAYED) do
+		if values[k] ~= nil then anyPlain = true break end
+	end
+	return { ok = anyPlain or not secret, secret = secret, values = values, secretStats = secretStats }
 end
 
 -- In-game validation: shows what the client reports and how we map it.

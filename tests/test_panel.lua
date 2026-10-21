@@ -126,3 +126,43 @@ T.test("UNIT_PET for the player triggers a refresh with the new pet state", func
 	T.eq(n, 1, "refreshed")
 	T.eq(lastPet, true, "new pet state read")
 end)
+
+T.test("a secret stat renders the rest plus an unavailable note", function()
+	local ns = load(true)
+	_G.UnitStat = function(_, i) return 110, 110 end
+	_G.UnitHealthMax = function() return 777 end
+	_G.UnitArmor = function() return 0, 555 end
+	_G.issecretvalue = function(v) return v == 777 or v == 555 end
+	S.fire("ADDON_LOADED", "StatLens")
+	S.fire("PLAYER_LOGIN")
+	ns.Talents.last = { ranks = { ancestralKnowledge = 5 }, spellIDs = {}, unmatched = {}, missing = {}, ok = true }
+	CharacterFrame:Show()
+	CharacterFrame.scripts.OnShow(CharacterFrame)
+	local texts = {}
+	for i, fs in ipairs(ns.Panel.pool) do if fs.shown ~= false and fs.text then texts[#texts + 1] = fs.text end end
+	T.eq(texts[1], "Intellect 110 (talents +10)")
+	T.eq(texts[2], "Ancestral Knowledge 5/5: +10")
+	T.eq(texts[#texts], "Unavailable right now: Health, Armor")
+	T.eq(ns.Panel.pool[1].color[4], 1, "not dimmed")
+end)
+
+T.test("combat with no previous render shows only the frozen note", function()
+	local ns = load(true)
+	S.fire("ADDON_LOADED", "StatLens")
+	S.fire("PLAYER_LOGIN")
+	_G.InCombatLockdown = function() return true end
+	CharacterFrame:Show()
+	CharacterFrame.scripts.OnShow(CharacterFrame)
+	T.eq(ns.Panel.pool[1] and ns.Panel.pool[1].text, "Frozen in combat")
+	T.eq(ns.Panel.pool[2], nil)
+end)
+
+T.test("every displayable stat secret freezes out of combat", function()
+	local ns = load(true)
+	_G.issecretvalue = function(v) return type(v) == "number" end
+	S.fire("ADDON_LOADED", "StatLens")
+	S.fire("PLAYER_LOGIN")
+	CharacterFrame:Show()
+	CharacterFrame.scripts.OnShow(CharacterFrame)
+	T.eq(ns.Panel.pool[1] and ns.Panel.pool[1].text, "Frozen in combat")
+end)
