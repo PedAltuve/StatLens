@@ -95,7 +95,7 @@ local function append(tooltip)
 	if not data then return end
 	local talents = ns.Talents.last or ns.Talents.Read()
 	local breakdown = ns.Calc.Breakdown(stats.values, talents.ranks, data)
-	local lines = ns.Format.StatTooltipLines(statKey, breakdown, data, talents.ranks)
+	local lines = ns.Format.StatTooltipLines(statKey, breakdown, data, talents.ranks, stats.secretStats)
 	if #lines == 0 then return end
 
 	tooltip.statLensStatDone = true

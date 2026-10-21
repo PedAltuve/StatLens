@@ -179,3 +179,11 @@ T.test("secret title -> nothing, no raise", function()
 	T.truthy(ok, tostring(err))
 	T.eq(#GameTooltip.lines, 0)
 end)
+
+T.test("secret source stat -> hovered stat explains the missing talent contribution", function()
+	local ns = setup("Attack Power 200")
+	_G.issecretvalue = function(v) return v == 72 end
+	GameTooltip:Show()
+	local all = table.concat(GameTooltip.lines, "\n")
+	T.truthy(all:find("Mental Dexterity: not shown, Intellect unavailable right now", 1, true), all)
+end)
