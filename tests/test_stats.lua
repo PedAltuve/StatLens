@@ -315,16 +315,48 @@ T.test("Stats.Read pet from UnitExists", function()
 	T.truthy(okCall); T.eq(r.values.pet, nil, "throwing API")
 end)
 
-T.test("Stats.Read secret pet", function()
+-- Fake secret: any metamethod use (compare, order, index, concat, arithmetic, call) raises.
+local function trap() error("secret value inspected", 2) end
+local SECRET_MT = {
+	__eq = trap, __lt = trap, __le = trap, __index = trap, __newindex = trap, __concat = trap,
+	__len = trap, __unm = trap, __add = trap, __sub = trap, __mul = trap, __div = trap, __call = trap,
+}
+local function fakeSecret() return setmetatable({}, SECRET_MT) end
+
+T.test("fake secret trips on comparison", function()
+	local a, b = fakeSecret(), fakeSecret()
+	T.eq(pcall(function() return a == b end), false, "__eq trips")
+	T.eq(pcall(function() return a < b end), false, "__lt trips")
+	T.eq(pcall(function() return a <= b end), false, "__le trips")
+	T.eq(pcall(function() return a .. "" end), false, "__concat trips")
+	T.eq(pcall(function() return a + 1 end), false, "__add trips")
+end)
+
+T.test("Stats.Read secret pet is unknown, not a frozen panel", function()
 	local ns = load()
 	fullApi()
-	local secret = setmetatable({}, { __eq = function() error("compared secret") end })
+	local secret = fakeSecret()
+	local seen = 0
 	_G.UnitExists = function() return secret end
-	_G.issecretvalue = function(v) return rawequal(v, secret) end
+	_G.issecretvalue = function(v)
+		if rawequal(v, secret) then seen = seen + 1 return true end
+		return false
+	end
 	local okCall, r = pcall(ns.Stats.Read)
-	T.truthy(okCall, "no compare on secret")
-	T.eq(r.ok, false); T.eq(r.secret, true)
-	T.eq(r.values.pet, nil)
+	T.truthy(okCall, "secret never inspected: " .. tostring(r))
+	T.truthy(seen > 0, "checked through IsSecret")
+	T.eq(r.ok, true); T.eq(r.secret, false)
+	T.eq(r.values.pet, nil, "secret pet stored as unknown")
+	for _, x in pairs(r.values) do T.truthy(not rawequal(x, secret), "secret not leaked") end
+	T.eq(r.values.str, 201); T.eq(r.values.ap, 115); T.eq(r.values.meleeCrit, 5.5)
+
+	S.loadAddonFile("Data/Warlock.lua", ns)
+	S.loadAddonFile("Calc.lua", ns)
+	local v = r.values
+	v.sp, v.level = 200, 30
+	local b = ns.Calc.Breakdown(v, { demonicKnowledge = 3 }, ns.Data.WARLOCK)
+	T.eq(b.talents.demonicKnowledge.contributions.sp, nil, "pet-gated effect inactive")
+	T.near(b.talents.demonicKnowledge.inactive.sp, 30, 1e-9)
 end)
 
 T.test("stubs reset clears UnitExists", function()

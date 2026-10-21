@@ -103,8 +103,10 @@ local function readValues()
 		if hasSecret then v.defense = secret else v.defense = defBase + defMod end
 	end
 
-	-- A secret boolean is kept raw so Read() can flag it; never test it here.
-	v.pet = try(UnitExists, "pet")
+	-- Pet state only gates `pet` effects; a secret answer means unknown (inactive) rather than
+	-- flagging the whole read. Never test the value before the secret check.
+	local pet = try(UnitExists, "pet")
+	if ns.IsSecret(pet) then v.pet = nil else v.pet = pet end
 
 	v.mainHand = slotKind(16)
 	v.offHand = slotKind(17)
