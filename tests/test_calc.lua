@@ -251,3 +251,17 @@ T.test("conditions: weapons, shield, combined", function()
 	local n = ns.Calc.NextPoint(v({ mainHand = "sword" }), { wm = 0 }, d, "wm")
 	T.eq(n.inactiveDeltas.meleeCrit, 5); T.eq(n.inactiveConds.meleeCrit.weapons[1], "axe")
 end)
+
+T.test("ranged stats: flat rangedCrit and fromStat rangedAp", function()
+	local ns = load()
+	local d = synth({
+		T1("lethal", { { stat = "rangedCrit", op = "flat", perRank = { 1, 2, 3 } } }),
+		T1("careful", { { stat = "rangedAp", op = "fromStat", source = "int", perRank = { 0.15, 0.3, 0.45 } } }),
+	})
+	local b = ns.Calc.Breakdown({ rangedCrit = 9, rangedAp = 500, int = 200 }, { lethal = 3, careful = 2 }, d)
+	T.eq(part(b, "rangedCrit", "lethal").amount, 3)
+	T.eq(b.stats.rangedCrit.talentTotal, 3)
+	T.near(part(b, "rangedAp", "careful").amount, 60, 1e-9, "30% of int")
+	T.near(b.stats.rangedAp.talentTotal, 60, 1e-9)
+	T.eq(b.stats.ap, nil, "melee ap untouched")
+end)

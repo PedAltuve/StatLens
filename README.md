@@ -2,7 +2,7 @@
 
 WoW: Forever addon that explains how your talents change your character stats.
 
-Supported: Shaman, Druid, Warrior, Priest, Paladin and Mage, all three talent trees each. enUS client, Interface 16001 (beta build 1.60.1.70338).
+Supported: Shaman, Druid, Warrior, Priest, Paladin, Mage and Hunter, all three talent trees each. enUS client, Interface 16001 (beta build 1.60.1.70338).
 
 Talents that change character sheet stats:
 
@@ -26,6 +26,9 @@ Talents that change character sheet stats:
 | Mage | Arcane | Arcane Mind (Intellect), Arcane Resilience (armor from Intellect), Arcane Instability (crit) |
 | Mage | Fire | none (all school- or spell-specific) |
 | Mage | Frost | none (all school- or spell-specific) |
+| Hunter | Beast Mastery | none (pet and aspect talents) |
+| Hunter | Marksmanship | Lethal Attacks (melee and ranged crit), Careful Aim (melee and ranged Attack Power from Intellect) |
+| Hunter | Survival | Lightning Reflexes (Agility), Survivalist (health), Deflection (parry), Surefooted (melee hit) |
 
 Every other talent is listed too, so its tooltip explains it even though it does not change the sheet.
 

@@ -4,15 +4,16 @@ local Format = {}
 ns.Format = Format
 
 local ORDER = {
-	"health", "str", "agi", "stam", "int", "spirit", "ap", "sp", "heal", "hit", "spellHit",
-	"meleeCrit", "spellCrit", "defense", "dodge", "parry", "block", "armor",
+	"health", "str", "agi", "stam", "int", "spirit", "ap", "rangedAp", "sp", "heal", "hit", "spellHit",
+	"meleeCrit", "rangedCrit", "spellCrit", "defense", "dodge", "parry", "block", "armor",
 }
 local LABELS = {
 	int = "Intellect", stam = "Stamina", agi = "Agility", str = "Strength", ap = "Attack Power",
 	spirit = "Spirit", defense = "Defense", block = "Block", hit = "Melee Hit", spellHit = "Spell Hit", health = "Health",
 	sp = "Spell Power", heal = "Spell Healing", armor = "Armor", meleeCrit = "Melee Crit", spellCrit = "Spell Crit", dodge = "Dodge", parry = "Parry",
+	rangedAp = "Ranged Attack Power", rangedCrit = "Ranged Crit",
 }
-local PERCENT = { block = true, hit = true, spellHit = true, meleeCrit = true, spellCrit = true, dodge = true, parry = true }
+local PERCENT = { block = true, hit = true, spellHit = true, meleeCrit = true, rangedCrit = true, spellCrit = true, dodge = true, parry = true }
 
 local function num(stat, x)
 	if PERCENT[stat] then return ("%.1f%%"):format(x) end

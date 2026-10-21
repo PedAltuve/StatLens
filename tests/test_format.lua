@@ -237,3 +237,24 @@ T.test("defense/block labels and order", function()
 	T.eq(heads[3], "Parry 6.0% (talents +1.0%)")
 	T.eq(heads[4], "Block 5.0% (talents +2.0%)")
 end)
+
+T.test("ranged stat labels, order and rendering", function()
+	local ns = load()
+	local d = { talents = {
+		{ key = "a", name = "A", maxRank = 1, kind = "stat", explain = "x", effects = {
+			{ stat = "rangedCrit", op = "flat", perRank = { 3 } }, { stat = "meleeCrit", op = "flat", perRank = { 1 } },
+			{ stat = "rangedAp", op = "flat", perRank = { 50 } }, { stat = "ap", op = "flat", perRank = { 20 } },
+			{ stat = "spellCrit", op = "flat", perRank = { 1 } }, { stat = "sp", op = "flat", perRank = { 5 } } } },
+	} }
+	local v = { rangedCrit = 7.5, meleeCrit = 5.4, rangedAp = 412.4, ap = 380, spellCrit = 2, sp = 10 }
+	local heads = {}
+	for _, l in ipairs(ns.Format.Lines(ns.Calc.Breakdown(v, { a = 1 }, d), { a = 1 }, d)) do
+		if l.kind == "stat" then heads[#heads + 1] = l.text end
+	end
+	T.eq(heads[1], "Attack Power 380 (talents +20)")
+	T.eq(heads[2], "Ranged Attack Power 412 (talents +50)")
+	T.eq(heads[3], "Spell Power 10 (talents +5)")
+	T.eq(heads[4], "Melee Crit 5.4% (talents +1.0%)")
+	T.eq(heads[5], "Ranged Crit 7.5% (talents +3.0%)")
+	T.eq(heads[6], "Spell Crit 2.0% (talents +1.0%)")
+end)

@@ -65,6 +65,12 @@ local function readValues()
 		if hasSecret then v.ap = secret else v.ap = base + pos + neg end
 	end
 
+	local rBase, rPos, rNeg = try(UnitRangedAttackPower, "player")
+	if rBase ~= nil and rPos ~= nil and rNeg ~= nil then
+		local hasSecret, secret = firstSecret(rBase, rPos, rNeg)
+		if hasSecret then v.rangedAp = secret else v.rangedAp = rBase + rPos + rNeg end
+	end
+
 	local sp
 	for school = 2, 7 do
 		local x = try(GetSpellBonusDamage, school)
@@ -76,6 +82,7 @@ local function readValues()
 	v.sp = sp
 
 	v.meleeCrit = try(GetCritChance)
+	v.rangedCrit = try(GetRangedCritChance)
 	v.spellCrit = try(GetSpellCritChance, 4)
 	v.dodge = try(GetDodgeChance)
 	v.parry = try(GetParryChance)
