@@ -74,6 +74,16 @@ T.test("MatchStat", function()
 	T.eq(M("Fireball"), nil)
 end)
 
+T.test("MatchStat ranged labels", function()
+	local ns = setup("x")
+	local M = ns.StatTooltip.MatchStat
+	T.eq(M("Ranged Attack Power 412 (300+112)"), "rangedAp")
+	T.eq(M("Ranged Critical Strike 7.5%"), "rangedCrit")
+	T.eq(M("Ranged Crit 7.5%"), "rangedCrit")
+	T.eq(M("Attack Power 380"), "ap")
+	T.eq(M("Critical Strike 10.3%"), "meleeCrit")
+end)
+
 T.test("appends once for owner under CharacterFrame", function()
 	local ns, hooks = setup("Intellect 72 (40+32)")
 	T.truthy(hooks.Show, "hooked")

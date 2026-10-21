@@ -241,3 +241,59 @@ T.test("Stats.Read slotKind: secret classID on off hand slot", function()
 	local ok, r = pcall(ns.Stats.Read)
 	T.truthy(ok); T.eq(r.secret, true)
 end)
+
+T.test("Stats.Read ranged AP and crit", function()
+	local ns = load()
+	fullApi()
+	_G.UnitRangedAttackPower = function() return 300, 120, -8 end
+	_G.GetRangedCritChance = function() return 7.5 end
+	local r = ns.Stats.Read()
+	T.truthy(r.ok)
+	T.eq(r.values.rangedAp, 412, "rangedAp = base+pos+neg")
+	T.eq(r.values.rangedCrit, 7.5)
+	T.eq(r.values.ap, 115, "melee ap unaffected")
+end)
+
+T.test("Stats.Read secret ranged positive buff only", function()
+	local ns = load()
+	fullApi()
+	local secret = {}
+	_G.UnitRangedAttackPower = function() return 300, secret, -8 end
+	_G.GetRangedCritChance = function() return 7.5 end
+	_G.issecretvalue = function(v) return v == secret end
+	local okCall, r = pcall(ns.Stats.Read)
+	T.truthy(okCall, "no arithmetic on secret")
+	T.eq(r.ok, false); T.eq(r.secret, true)
+	T.eq(r.values.rangedAp, nil)
+end)
+
+T.test("Stats.Read secret ranged crit", function()
+	local ns = load()
+	fullApi()
+	_G.UnitRangedAttackPower = function() return 300, 120, -8 end
+	_G.GetRangedCritChance = function() return 7.25 end
+	_G.issecretvalue = function(v) return v == 7.25 end
+	local r = ns.Stats.Read()
+	T.eq(r.ok, false); T.eq(r.secret, true)
+end)
+
+T.test("Stats.Read missing/throwing ranged API leaves nil", function()
+	local ns = load()
+	fullApi()
+	local okCall, r = pcall(ns.Stats.Read)
+	T.truthy(okCall); T.truthy(r.ok)
+	T.eq(r.values.rangedAp, nil); T.eq(r.values.rangedCrit, nil)
+	_G.UnitRangedAttackPower = function() error("x") end
+	_G.GetRangedCritChance = function() error("x") end
+	okCall, r = pcall(ns.Stats.Read)
+	T.truthy(okCall); T.truthy(r.ok)
+	T.eq(r.values.rangedAp, nil); T.eq(r.values.rangedCrit, nil)
+	T.eq(r.values.str, 201)
+end)
+
+T.test("stubs reset clears ranged APIs", function()
+	_G.UnitRangedAttackPower = function() end
+	_G.GetRangedCritChance = function() end
+	S.reset()
+	T.eq(_G.UnitRangedAttackPower, nil); T.eq(_G.GetRangedCritChance, nil)
+end)

@@ -45,7 +45,8 @@ local function fakeClient()
 end
 
 local STATS = { defense = 1, block = 1, hit = 1, spellHit = 1, health = 1, spirit = 1, int = 1, stam = 1, agi = 1, str = 1, ap = 1, sp = 1, heal = 1, meleeCrit = 1,
-	spellCrit = 1, dodge = 1, parry = 1, armor = 1 }
+	spellCrit = 1, dodge = 1, parry = 1, armor = 1,
+	rangedAp = 1, rangedCrit = 1 }
 local OPS = { pct = 1, flat = 1, fromStat = 1, perLevel = 1, enables = 1 }
 local KINDS = { stat = 1, conditional = 1, utility = 1 }
 
