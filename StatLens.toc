@@ -4,6 +4,7 @@
 ## Author: Pedro Altuve
 ## Version: @project-version@
 ## SavedVariables: StatLensDB
+## X-Wago-ID: ZKxOok6k
 
 Core.lua
 Data/Shaman.lua
