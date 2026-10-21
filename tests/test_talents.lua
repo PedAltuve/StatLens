@@ -12,6 +12,7 @@ local function load()
 	S.loadAddonFile("Data/Mage.lua", ns)
 	S.loadAddonFile("Data/Hunter.lua", ns)
 	S.loadAddonFile("Data/Rogue.lua", ns)
+	S.loadAddonFile("Data/Warlock.lua", ns)
 	S.loadAddonFile("Talents.lua", ns)
 	return ns
 end
@@ -54,7 +55,7 @@ local KINDS = { stat = 1, conditional = 1, utility = 1 }
 
 T.test("data integrity (all classes)", function()
 	local ns = load()
-	local expected = { SHAMAN = 50, DRUID = 52, WARRIOR = 52, PRIEST = 52, PALADIN = 50, MAGE = 55, HUNTER = 51, ROGUE = 53 }
+	local expected = { SHAMAN = 50, DRUID = 52, WARRIOR = 52, PRIEST = 52, PALADIN = 50, MAGE = 55, HUNTER = 51, ROGUE = 53, WARLOCK = 52 }
 	local classes = 0
 	for class, d in pairs(ns.Data) do
 		classes = classes + 1
@@ -78,7 +79,7 @@ T.test("data integrity (all classes)", function()
 			if t.kind == "stat" then T.truthy(t.effects and #t.effects > 0, "effects " .. id) end
 		end
 	end
-	T.eq(classes, 8)
+	T.eq(classes, 9)
 	T.eq(ns.Data.SHAMAN.tree, "Enhancement"); T.eq(ns.Data.DRUID.tree, "Feral Combat")
 end)
 
@@ -479,4 +480,43 @@ T.test("Read matches one rogue talent per tree", function()
 	T.eq(ns.Talents.ByName("Hack and Slash").tree, "Combat")
 	T.eq(ns.Talents.ByName("Serrated Blades").tree, "Subtlety")
 	T.eq(ns.Talents.ByName("Lightning Reflexes").tree, "Combat", "rogue's own Lightning Reflexes")
+end)
+
+T.test("warlock: 52 unique talents, 17/19/16 split", function()
+	local ns = load()
+	local d = ns.Data.WARLOCK
+	T.eq(d.tree, "Affliction"); T.eq(#d.talents, 52)
+	local names, trees = {}, {}
+	for _, t in ipairs(d.talents) do
+		T.truthy(not names[t.name], "unique name " .. t.name)
+		names[t.name] = true
+		local tree = t.tree or "Affliction"
+		trees[tree] = (trees[tree] or 0) + 1
+	end
+	T.eq(trees.Affliction, 17); T.eq(trees.Demonology, 19); T.eq(trees.Destruction, 16)
+end)
+
+T.test("Read matches one warlock talent per tree", function()
+	local ns = load()
+	_G.UnitClass = function() return "Warlock", "WARLOCK" end
+	local spells = { [1] = "Suppression", [2] = "Demonic Knowledge", [3] = "Ruin" }
+	local nodes = {
+		[1] = { ID = 1, entryIDs = { 1 }, currentRank = 5 },
+		[2] = { ID = 2, entryIDs = { 2 }, currentRank = 3 },
+		[3] = { ID = 3, entryIDs = { 3 }, currentRank = 2 },
+	}
+	_G.C_ClassTalents = { GetActiveConfigID = function() return 9 end }
+	_G.C_Spell = { GetSpellName = function(id) return spells[id] end }
+	_G.C_Traits = {
+		GetConfigInfo = function() return { treeIDs = { 7 } } end,
+		GetTreeNodes = function() return { 1, 2, 3 } end,
+		GetNodeInfo = function(_, id) return nodes[id] end,
+		GetEntryInfo = function(_, e) return { definitionID = e } end,
+		GetDefinitionInfo = function(d) return { spellID = d } end,
+	}
+	local r = ns.Talents.Read()
+	T.eq(r.ranks.suppression, 5); T.eq(r.ranks.demonicKnowledge, 3); T.eq(r.ranks.ruin, 2)
+	T.eq(#r.unmatched, 0)
+	T.eq(ns.Talents.ByName("Demonic Knowledge").tree, "Demonology")
+	T.eq(ns.Talents.ByName("Ruin").tree, "Destruction")
 end)

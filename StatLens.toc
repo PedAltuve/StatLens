@@ -14,6 +14,7 @@ Data/Paladin.lua
 Data/Mage.lua
 Data/Hunter.lua
 Data/Rogue.lua
+Data/Warlock.lua
 Talents.lua
 Stats.lua
 Calc.lua

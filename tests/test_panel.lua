@@ -109,3 +109,20 @@ T.test("UPDATE_SHAPESHIFT_FORM triggers a refresh", function()
 	S.fire("UPDATE_SHAPESHIFT_FORM")
 	T.eq(n, 1, "refreshed")
 end)
+
+T.test("UNIT_PET for the player triggers a refresh with the new pet state", function()
+	local ns = load(true)
+	S.fire("ADDON_LOADED", "StatLens")
+	S.fire("PLAYER_LOGIN")
+	CharacterFrame:Show()
+	CharacterFrame.scripts.OnShow(CharacterFrame)
+	local n, lastPet = 0, "unset"
+	local orig = ns.Calc.Breakdown
+	ns.Calc.Breakdown = function(v, ...) n = n + 1 lastPet = v.pet return orig(v, ...) end
+	S.fire("UNIT_PET", "target")
+	T.eq(n, 0, "other unit ignored")
+	_G.UnitExists = function(unit) return unit == "pet" end
+	S.fire("UNIT_PET", "player")
+	T.eq(n, 1, "refreshed")
+	T.eq(lastPet, true, "new pet state read")
+end)

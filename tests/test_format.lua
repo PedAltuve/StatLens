@@ -258,3 +258,44 @@ T.test("ranged stat labels, order and rendering", function()
 	T.eq(heads[5], "Ranged Crit 7.5% (talents +3.0%)")
 	T.eq(heads[6], "Spell Crit 2.0% (talents +1.0%)")
 end)
+
+T.test("pet condition text", function()
+	local ns = load()
+	local d = { talents = {
+		{ key = "dk", name = "Demonic Thing", maxRank = 2, kind = "stat", explain = "x",
+			effects = { { stat = "sp", op = "perLevel", pet = true, perRank = { 0.5, 1.0 } } } },
+		{ key = "cp", name = "Cat Pet", maxRank = 1, kind = "stat", explain = "x",
+			effects = { { stat = "dodge", op = "flat", forms = { "cat" }, pet = true, perRank = { 2 } } } },
+	} }
+	local v = { sp = 100, dodge = 4, level = 25, pet = true }
+	local ranks = { dk = 2 }
+	local b = ns.Calc.Breakdown(v, ranks, d)
+	local lines = {}
+	for _, l in ipairs(ns.Format.Lines(b, ranks, d)) do lines[#lines + 1] = l.kind .. "|" .. l.text end
+	T.eq(lines[1], "stat|Spell Power 100 (talents +25)")
+	T.eq(lines[2], "part|Demonic Thing 2/2: +25 (100% of level)")
+
+	v.pet = false
+	b = ns.Calc.Breakdown(v, ranks, d)
+	lines = {}
+	for _, l in ipairs(ns.Format.Lines(b, ranks, d)) do lines[#lines + 1] = l.kind .. "|" .. l.text end
+	T.eq(lines[1], "stat|Spell Power 100")
+	T.eq(lines[2], "inactive|Demonic Thing 2/2: +25 with a pet active")
+	local st = ns.Format.StatTooltipLines("sp", b, d, ranks)
+	T.eq(st[1], "|cff999999With a pet active: +25 (Demonic Thing 2/2)|r")
+	local tl = ns.Format.TooltipLines(d.talents[1], 2, b, nil)
+	T.eq(tl[2].text, "With a pet active: +25 Spell Power")
+
+	local r1 = { dk = 1 }
+	local b1 = ns.Calc.Breakdown(v, r1, d)
+	local all = {}
+	for _, l in ipairs(ns.Format.TooltipLines(d.talents[1], 1, b1, ns.Calc.NextPoint(v, r1, d, "dk"))) do all[#all + 1] = l.text end
+	all = table.concat(all, "\n")
+	T.truthy(all:find("Next point (2/2): +13 Spell Power with a pet active", 1, true), all)
+
+	local rc = { cp = 1 }
+	b = ns.Calc.Breakdown({ dodge = 4, form = "bear", pet = false }, rc, d)
+	lines = {}
+	for _, l in ipairs(ns.Format.Lines(b, rc, d)) do lines[#lines + 1] = l.kind .. "|" .. l.text end
+	T.eq(lines[2], "inactive|Cat Pet 1/1: +2.0% in Cat Form and with a pet active")
+end)

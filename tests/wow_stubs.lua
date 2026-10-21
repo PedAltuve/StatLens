@@ -61,7 +61,7 @@ function S.reset()
 	for _, n in ipairs({ "UnitStat", "UnitAttackPower", "GetSpellBonusDamage", "GetCritChance",
 		"GetSpellCritChance", "GetDodgeChance", "GetParryChance", "UnitLevel", "GetSpellBonusHealing",
 		"UnitArmor", "GetShapeshiftFormID", "GetHitModifier", "GetSpellHitModifier", "UnitHealthMax",
-		"GetBlockChance", "UnitDefense", "GetInventoryItemID", "UnitRangedAttackPower", "GetRangedCritChance" }) do _G[n] = nil end
+		"GetBlockChance", "UnitDefense", "GetInventoryItemID", "UnitRangedAttackPower", "GetRangedCritChance", "UnitExists" }) do _G[n] = nil end
 	_G.C_Item = nil
 	_G.C_Timer = { After = function(_, fn) fn() end }
 	_G.InCombatLockdown = function() return false end

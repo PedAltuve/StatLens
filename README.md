@@ -2,7 +2,7 @@
 
 WoW: Forever addon that explains how your talents change your character stats.
 
-Supported: Shaman, Druid, Warrior, Priest, Paladin, Mage, Hunter and Rogue, all three talent trees each. enUS client, Interface 16001 (beta build 1.60.1.70338).
+Supported: all nine classes (Shaman, Druid, Warrior, Priest, Paladin, Mage, Hunter, Rogue and Warlock), all three talent trees each. enUS client, Interface 16001 (beta build 1.60.1.70338).
 
 Talents that change character sheet stats:
 
@@ -32,12 +32,15 @@ Talents that change character sheet stats:
 | Rogue | Assassination | Malice (melee and ranged crit) |
 | Rogue | Combat | Lightning Reflexes (dodge), Deflection (parry), Precision (hit), Hack and Slash (crit with a Dagger or Fist Weapon) |
 | Rogue | Subtlety | none (all ability- or situation-specific) |
+| Warlock | Affliction | Suppression (hit) |
+| Warlock | Demonology | Demonic Embrace (Stamina), Demonic Knowledge (spell damage from level, with a demon pet active) |
+| Warlock | Destruction | none (all school- or spell-specific) |
 
 Every other talent is listed too, so its tooltip explains it even though it does not change the sheet.
 
 Party auras (Leader of the Pack, Moonkin Form) are attributed to your talent; if a groupmate provides the same aura, the client total already includes it.
 
-Conditional talents depend on your form (Druid) or equipment (main-hand weapon type for Warrior and Rogue, shield). When the condition is not met, the effect is shown in grey with its value under that condition, and it is not counted in the talent total.
+Conditional talents depend on your form (Druid) or equipment (main-hand weapon type for Warrior and Rogue, shield) or an active pet (Warlock). When the condition is not met, the effect is shown in grey with its value under that condition, and it is not counted in the talent total.
 
 Anticipation's 0.04% per Defense point is the Classic rule and is not yet confirmed on Forever.
 
