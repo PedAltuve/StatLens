@@ -25,10 +25,23 @@ local function build(spellID)
 	local rank = talents.ranks[entry.key] or 0
 	local breakdown = ns.Calc.Breakdown(stats.values, talents.ranks, data)
 	local nextPoint = ns.Calc.NextPoint(stats.values, talents.ranks, data, entry.key)
-	return ns.Format.TooltipLines(entry, rank, breakdown, nextPoint)
+	local lines = ns.Format.TooltipLines(entry, rank, breakdown, nextPoint)
+	-- One note per unreadable stat this talent reads or changes, in panel order.
+	local touched = {}
+	for _, e in ipairs(entry.effects or {}) do
+		touched[e.stat] = true
+		if e.source then touched[e.source] = true end
+	end
+	for _, stat in ipairs(ns.Format.ORDER) do
+		if touched[stat] and stats.secretStats[stat] then
+			lines[#lines + 1] = { text = ("StatLens: %s unavailable right now"):format(ns.Format.Label(stat)), r = GREY[1], g = GREY[2], b = GREY[3] }
+		end
+	end
+	return lines
 end
 
 local function append(tooltip, spellID)
+	if ns.IsSecret(spellID) then return end
 	if not spellID or (StatLensDB and StatLensDB.tooltip == false) then return end
 	if not hooked[tooltip] and tooltip.HookScript then
 		hooked[tooltip] = true

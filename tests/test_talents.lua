@@ -520,3 +520,80 @@ T.test("Read matches one warlock talent per tree", function()
 	T.eq(ns.Talents.ByName("Demonic Knowledge").tree, "Demonology")
 	T.eq(ns.Talents.ByName("Ruin").tree, "Destruction")
 end)
+
+-- Names that exist in more than one class, derived from the loaded data.
+local function sharedNames(ns)
+	local classesOf, shared = {}, {}
+	for class, d in pairs(ns.Data) do
+		for _, t in ipairs(d.talents) do
+			classesOf[t.name] = classesOf[t.name] or {}
+			table.insert(classesOf[t.name], class)
+		end
+	end
+	for name, list in pairs(classesOf) do
+		if #list > 1 then table.sort(list) shared[name] = list end
+	end
+	return shared
+end
+
+local function fakeTree(name, rank)
+	_G.C_ClassTalents = { GetActiveConfigID = function() return 9 end }
+	_G.C_Spell = { GetSpellName = function(id) return id == 1 and name or nil end }
+	_G.C_Traits = {
+		GetConfigInfo = function() return { treeIDs = { 7 } } end,
+		GetTreeNodes = function() return { 1 } end,
+		GetNodeInfo = function() return { ID = 1, entryIDs = { 1 }, currentRank = rank } end,
+		GetEntryInfo = function(_, e) return { definitionID = e } end,
+		GetDefinitionInfo = function(d) return { spellID = d } end,
+	}
+end
+
+T.test("shared talent names resolve to the player's class", function()
+	local ns = load()
+	local shared = sharedNames(ns)
+	T.truthy(shared["Lightning Reflexes"] and shared["Deflection"], "derived set includes known overlaps")
+	local checked = 0
+	for name, classes in pairs(shared) do
+		for _, class in ipairs(classes) do
+			local entry
+			for _, t in ipairs(ns.Data[class].talents) do if t.name == name then entry = t end end
+			_G.UnitClass = function() return class, class end
+			local rank = math.min(2, entry.maxRank)
+			fakeTree(name, rank)
+			local r = ns.Talents.Read()
+			local id = name .. "/" .. class
+			T.eq(r.ranks[entry.key], rank, "rank under class key " .. id)
+			T.eq(#r.unmatched, 0, "matched " .. id)
+			local got = ns.Talents.ByName(name)
+			T.truthy(rawequal(got, entry), "ByName returns class entry " .. id)
+			T.truthy(rawequal(got.effects, entry.effects), "same effects " .. id)
+			T.eq(got.tree, entry.tree, "same tree " .. id)
+			checked = checked + 1
+		end
+	end
+	T.truthy(checked > 0, "checked shared names")
+end)
+
+T.test("condition keys come from Stats.WEAPONS and Stats.FORMS", function()
+	local ns = load()
+	S.loadAddonFile("Stats.lua", ns)
+	local weapons, forms = {}, {}
+	for _, w in pairs(ns.Stats.WEAPONS) do weapons[w] = true end
+	for _, f in pairs(ns.Stats.FORMS) do forms[f] = true end
+	local seen = 0
+	for class, d in pairs(ns.Data) do
+		for _, t in ipairs(d.talents) do
+			for _, e in ipairs(t.effects or {}) do
+				for _, w in ipairs(e.weapons or {}) do
+					seen = seen + 1
+					T.truthy(weapons[w], ("weapon %s in %s/%s"):format(w, class, t.key))
+				end
+				for _, f in ipairs(e.forms or {}) do
+					seen = seen + 1
+					T.truthy(forms[f], ("form %s in %s/%s"):format(f, class, t.key))
+				end
+			end
+		end
+	end
+	T.truthy(seen > 0, "some conditions checked")
+end)

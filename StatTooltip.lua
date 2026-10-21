@@ -70,7 +70,7 @@ local function titleOf(tooltip)
 	local name = tooltip:GetName()
 	local line = name and _G[name .. "TextLeft1"]
 	local text = line and line:GetText()
-	if text == nil or ns.IsSecret(text) then return nil end
+	if ns.IsSecret(text) or text == nil then return nil end
 	return strip(text)
 end
 
@@ -90,12 +90,12 @@ local function append(tooltip)
 	local statKey = StatTooltip.MatchStat(title)
 	if not statKey then return end
 	local stats = ns.Stats.Read()
-	if not stats.ok then return end
+	if not stats.ok or stats.secretStats[statKey] then return end
 	local data = ns.Data[select(2, UnitClass("player"))]
 	if not data then return end
 	local talents = ns.Talents.last or ns.Talents.Read()
 	local breakdown = ns.Calc.Breakdown(stats.values, talents.ranks, data)
-	local lines = ns.Format.StatTooltipLines(statKey, breakdown, data, talents.ranks)
+	local lines = ns.Format.StatTooltipLines(statKey, breakdown, data, talents.ranks, stats.secretStats)
 	if #lines == 0 then return end
 
 	tooltip.statLensStatDone = true

@@ -62,3 +62,13 @@ T.test("Lightning Reflexes gives dodge", function()
 	T.eq(b.talents.lightningReflexes.contributions.dodge, 5)
 	T.eq(texts(ns, d, { dodge = 10 }, { lightningReflexes = 5 })[1], "stat|Dodge 10.0% (talents +5.0%)")
 end)
+
+T.test("Precision gives melee hit", function()
+	local ns, d = load()
+	local ranks = { precision = 3 }
+	local v = { hit = 5 }
+	T.eq(ns.Calc.Breakdown(v, ranks, d).talents.precision.contributions.hit, 3)
+	local got = texts(ns, d, v, ranks)
+	T.eq(got[1], "stat|Melee Hit 5.0% (talents +3.0%)")
+	T.eq(got[2], "part|Precision 3/3: +3.0%")
+end)

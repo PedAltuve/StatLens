@@ -13,6 +13,10 @@ local LABELS = {
 	sp = "Spell Power", heal = "Spell Healing", armor = "Armor", meleeCrit = "Melee Crit", spellCrit = "Spell Crit", dodge = "Dodge", parry = "Parry",
 	rangedAp = "Ranged Attack Power", rangedCrit = "Ranged Crit",
 }
+Format.ORDER = ORDER
+
+function Format.Label(stat) return LABELS[stat] or stat end
+
 local PERCENT = { block = true, hit = true, spellHit = true, meleeCrit = true, rangedCrit = true, spellCrit = true, dodge = true, parry = true }
 
 local function num(stat, x)
@@ -251,7 +255,8 @@ local function tag(t, rank)
 end
 
 -- Native-style lines (with color escapes) for a character sheet stat tooltip.
-function Format.StatTooltipLines(statKey, breakdown, classData, ranks)
+-- `secretStats` (optional): stats Read() could not see; fromStat talents fed by them get a note.
+function Format.StatTooltipLines(statKey, breakdown, classData, ranks, secretStats)
 	local out = {}
 	local talents = classData and classData.talents or {}
 	local stat = breakdown and breakdown.stats and breakdown.stats[statKey]
@@ -318,6 +323,16 @@ function Format.StatTooltipLines(statKey, breakdown, classData, ranks)
 		local t = byKey[p.key]
 		if t and p.inactive then
 			out[#out + 1] = ("%s%s: +%s (%s)%s"):format(C_GREY, capitalize(conditionText(p)), num(statKey, p.amount), tag(t, rankOf(t)), C_END)
+		end
+	end
+	-- f. contributions that cannot be computed because their source stat is secret
+	for _, t in ipairs(secretStats and talents or {}) do
+		local rank = rankOf(t)
+		for _, eff in ipairs(t.kind == "stat" and rank > 0 and t.effects or {}) do
+			if eff.op == "fromStat" and eff.stat == statKey and secretStats[eff.source] then
+				out[#out + 1] = ("%s%s: not shown, %s unavailable right now%s"):format(
+					C_GREY, t.name, LABELS[eff.source] or eff.source, C_END)
+			end
 		end
 	end
 	return out

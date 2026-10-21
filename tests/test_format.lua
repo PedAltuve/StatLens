@@ -299,3 +299,23 @@ T.test("pet condition text", function()
 	for _, l in ipairs(ns.Format.Lines(b, rc, d)) do lines[#lines + 1] = l.kind .. "|" .. l.text end
 	T.eq(lines[2], "inactive|Cat Pet 1/1: +2.0% in Cat Form and with a pet active")
 end)
+
+T.test("StatTooltipLines notes talents whose source stat is secret, keeps readable ones", function()
+	local ns = load()
+	local d = { talents = {
+		{ key = "fromInt", name = "From Int", maxRank = 1, kind = "stat",
+			effects = { { stat = "ap", op = "fromStat", source = "int", perRank = { 1 } } } },
+		{ key = "fromStr", name = "From Str", maxRank = 1, kind = "stat",
+			effects = { { stat = "ap", op = "fromStat", source = "str", perRank = { 1 } } } },
+		{ key = "unranked", name = "Unranked", maxRank = 1, kind = "stat",
+			effects = { { stat = "ap", op = "fromStat", source = "int", perRank = { 1 } } } },
+	} }
+	local ranks = { fromInt = 1, fromStr = 1 }
+	local b = ns.Calc.Breakdown({ str = 50, ap = 300 }, ranks, d)
+	local lines = ns.Format.StatTooltipLines("ap", b, d, ranks, { int = true })
+	local all = table.concat(lines, "\n")
+	T.truthy(all:find("From Str", 1, true), "readable contribution kept")
+	T.truthy(all:find("From Int: not shown, Intellect unavailable right now", 1, true), "secret source noted")
+	T.eq(all:find("Unranked", 1, true), nil, "unranked talent not noted")
+	T.eq(#ns.Format.StatTooltipLines("ap", b, d, ranks), 1, "no note without secretStats")
+end)

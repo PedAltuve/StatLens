@@ -10,6 +10,7 @@ local COLORS = {
 }
 
 local lastLines, pending, warned
+local INPUT_LABELS = { form = "form", mainHand = "main-hand weapon", offHand = "off-hand item", level = "level", pet = "pet" }
 
 local function enabled() return not StatLensDB or StatLensDB.panelShown ~= false end
 
@@ -130,9 +131,8 @@ local function render(lines, dim)
 end
 
 local function renderFrozen()
-	if not lastLines then return end
 	local lines = {}
-	for i, l in ipairs(lastLines) do lines[i] = l end
+	for i, l in ipairs(lastLines or {}) do lines[i] = l end
 	lines[#lines + 1] = { text = "Frozen in combat", indent = 0, kind = "note" }
 	render(lines, true)
 end
@@ -142,13 +142,31 @@ function Panel.Refresh()
 	if InCombatLockdown() then return renderFrozen() end
 
 	local stats = ns.Stats.Read()
-	if stats.secret then return renderFrozen() end
+	if not stats.ok then return renderFrozen() end
 	local class = select(2, UnitClass("player"))
 	local data = ns.Data[class]
-	if not stats.ok or not data then return end
+	if not data then return end
 
 	local talents = ns.Talents.last or ns.Talents.Read()
 	lastLines = ns.Format.Lines(ns.Calc.Breakdown(stats.values, talents.ranks, data), talents.ranks, data)
+	if stats.secret then
+		local labels = {}
+		for _, stat in ipairs(ns.Format.ORDER) do
+			if stats.secretStats[stat] then labels[#labels + 1] = ns.Format.Label(stat) end
+		end
+		if #labels > 0 then
+			lastLines[#lastLines + 1] = { text = "Unavailable right now: " .. table.concat(labels, ", "), indent = 0, kind = "note" }
+		end
+	end
+	-- Only inputs a ranked talent depends on; e.g. a secret pet state is noise for a Warrior.
+	local used, labels = ns.Calc.UsedInputs(talents.ranks, data), {}
+	for _, input in ipairs(stats.unknownInputs or {}) do
+		if used[input] then labels[#labels + 1] = INPUT_LABELS[input] or input end
+	end
+	if #labels > 0 then
+		lastLines[#lastLines + 1] = { text = "Unknown right now: " .. table.concat(labels, ", ")
+			.. " (talents that depend on them are not counted)", indent = 0, kind = "note" }
+	end
 	render(lastLines)
 end
 

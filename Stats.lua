@@ -16,8 +16,11 @@ Stats.WEAPONS = {
 -- Call fn(...) under pcall; return all results, or nothing on error / missing API.
 local function try(fn, ...)
 	if type(fn) ~= "function" then return end
-	local res = { pcall(fn, ...) }
-	if res[1] then return unpack(res, 2) end
+	-- Keep the exact result count: `#` on a table with nil holes is unreliable.
+	local res = { n = 0 }
+	local function pack(...) res.n = select("#", ...) for i = 1, res.n do res[i] = (select(i, ...)) end end
+	pack(pcall(fn, ...))
+	if res[1] then return unpack(res, 2, res.n) end
 end
 
 local function formName(id)
@@ -35,22 +38,39 @@ local function firstSecret(...)
 	return false
 end
 
--- Kind of the item in an equipment slot: weapon kind, "shield", "offhand", or nil. A secret id is
--- returned raw so Read() can flag it.
+-- Kind of the item in an equipment slot: weapon kind, "shield", "offhand", or nil. A secret id,
+-- classID or subClassID means unknown: nil kind plus a true second result, unlike an empty slot.
 local function slotKind(slot)
 	local id = try(GetInventoryItemID, "player", slot)
+	if ns.IsSecret(id) then return nil, true end
 	if id == nil then return nil end
-	if ns.IsSecret(id) then return id end
 	local info = C_Item and C_Item.GetItemInfoInstant
 	local _, _, _, _, _, classID, subClassID = try(info, id)
-	-- Never compare, concatenate or index with a secret; hand it back so Read() flags it.
-	local hasSecret, secret = firstSecret(classID, subClassID)
-	if hasSecret then return secret end
+	-- Never compare, concatenate or index with a secret.
+	if firstSecret(classID, subClassID) then return nil, true end
 	if classID == 2 then return Stats.WEAPONS[subClassID] or ("weapon:" .. tostring(subClassID)) end
 	if slot == 17 and classID == 4 then return subClassID == 6 and "shield" or "offhand" end
 end
 
-local function readValues()
+-- Sum of a multi-part read (base, buffs...). The secret check runs before any nil test or
+-- arithmetic: a secret component is returned as-is so Read() can flag it; any of the `n`
+-- expected parts missing gives nil.
+local function sumParts(n, ...)
+	local hasSecret, secret = firstSecret(...)
+	if hasSecret then return secret end
+	local total = 0
+	for i = 1, n do
+		local x = select(i, ...)
+		if x == nil then return nil end
+		total = total + x
+	end
+	return total
+end
+
+-- Condition inputs a secret made unknown, in display order. Never stored as values.
+local INPUTS = { "form", "mainHand", "offHand", "level", "pet" }
+
+local function readValues(unknown)
 	local v = {}
 	local names = { "str", "agi", "stam", "int", "spirit" }
 	for i, name in ipairs(names) do
@@ -58,26 +78,15 @@ local function readValues()
 		v[name] = effective
 	end
 
-	local base, pos, neg = try(UnitAttackPower, "player")
-	if base ~= nil and pos ~= nil and neg ~= nil then
-		-- A secret component poisons the sum; keep it as-is so the caller can detect it.
-		local hasSecret, secret = firstSecret(base, pos, neg)
-		if hasSecret then v.ap = secret else v.ap = base + pos + neg end
-	end
-
-	local rBase, rPos, rNeg = try(UnitRangedAttackPower, "player")
-	if rBase ~= nil and rPos ~= nil and rNeg ~= nil then
-		local hasSecret, secret = firstSecret(rBase, rPos, rNeg)
-		if hasSecret then v.rangedAp = secret else v.rangedAp = rBase + rPos + rNeg end
-	end
+	v.ap = sumParts(3, try(UnitAttackPower, "player"))
+	v.rangedAp = sumParts(3, try(UnitRangedAttackPower, "player"))
 
 	local sp
 	for school = 2, 7 do
 		local x = try(GetSpellBonusDamage, school)
-		if x ~= nil then
-			if ns.IsSecret(x) then sp = x break end
-			if sp == nil or x > sp then sp = x end
-		end
+		-- Secret check first: only a known-plain value may be nil-tested or compared.
+		if ns.IsSecret(x) then sp = x break end
+		if x ~= nil and (sp == nil or x > sp) then sp = x end
 	end
 	v.sp = sp
 
@@ -91,45 +100,60 @@ local function readValues()
 	v.spellHit = try(GetSpellHitModifier)
 	v.health = try(UnitHealthMax, "player")
 
-	v.level = try(UnitLevel, "player")
+	-- Level only feeds perLevel effects: a secret level is unknown, not a frozen stat.
+	local level = try(UnitLevel, "player")
+	if ns.IsSecret(level) then v.level, unknown.level = nil, true else v.level = level end
 	v.heal = try(GetSpellBonusHealing)
 	local _, armor = try(UnitArmor, "player")
 	v.armor = armor
 
 	v.block = try(GetBlockChance)
-	local defBase, defMod = try(UnitDefense, "player")
-	if defBase ~= nil and defMod ~= nil then
-		local hasSecret, secret = firstSecret(defBase, defMod)
-		if hasSecret then v.defense = secret else v.defense = defBase + defMod end
-	end
+	v.defense = sumParts(2, try(UnitDefense, "player"))
 
 	-- Pet state only gates `pet` effects; a secret answer means unknown (inactive) rather than
 	-- flagging the whole read. Never test the value before the secret check.
 	local pet = try(UnitExists, "pet")
-	if ns.IsSecret(pet) then v.pet = nil else v.pet = pet end
+	if ns.IsSecret(pet) then v.pet, unknown.pet = nil, true else v.pet = pet end
 
-	v.mainHand = slotKind(16)
-	v.offHand = slotKind(17)
+	v.mainHand, unknown.mainHand = slotKind(16)
+	v.offHand, unknown.offHand = slotKind(17)
 
 	local formID = try(GetShapeshiftFormID)
-	Stats.formID = formID
 	if ns.IsSecret(formID) then
-		-- Kept raw so Read() can flag it; never build strings from it.
-		v.form = formID
+		-- Unknown form; never keep or build strings from the secret.
+		Stats.formID, v.form, unknown.form = nil, nil, true
 	else
-		v.form = formName(formID)
+		Stats.formID, v.form = formID, formName(formID)
 	end
 	return v
 end
 
+-- Stats the panel displays; `ok` is false only when none of them is plain and at least one is secret.
+Stats.DISPLAYED = {
+	"str", "agi", "stam", "int", "spirit", "ap", "rangedAp", "sp", "heal", "meleeCrit", "rangedCrit",
+	"spellCrit", "hit", "spellHit", "dodge", "parry", "block", "defense", "armor", "health",
+}
+
+-- Secret values are removed from `values` (Calc skips nil stats) and listed in `secretStats`.
+-- `unknownInputs` lists condition inputs (form, weapons, level, pet) a secret made unknown.
 function Stats.Read()
-	local values = readValues()
-	for _, x in pairs(values) do
+	local unknown = {}
+	local values, secretStats, secret = readValues(unknown), {}, false
+	for k, x in pairs(values) do
 		if ns.IsSecret(x) then
-			return { ok = false, secret = true, values = {} }
+			values[k], secretStats[k], secret = nil, true, true
 		end
 	end
-	return { ok = true, secret = false, values = values }
+	local anyPlain = false
+	for _, k in ipairs(Stats.DISPLAYED) do
+		if values[k] ~= nil then anyPlain = true break end
+	end
+	local unknownInputs = {}
+	for _, k in ipairs(INPUTS) do
+		if unknown[k] then unknownInputs[#unknownInputs + 1] = k end
+	end
+	return { ok = anyPlain or not secret, secret = secret, values = values, secretStats = secretStats,
+		unknownInputs = unknownInputs }
 end
 
 -- In-game validation: shows what the client reports and how we map it.
