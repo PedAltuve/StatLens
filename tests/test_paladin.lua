@@ -50,3 +50,20 @@ T.test("Sacred Duty inverts Stamina; Anticipation mirrors Warrior", function()
 	T.eq(b.talents.anticipation.contributions.defense, 20)
 	T.near(b.talents.anticipation.contributions.block, 0.8, 1e-9)
 end)
+
+T.test("Holy Power gives spell crit", function()
+	local ns, d = load()
+	local ranks = { holyPower = 5 }
+	local v = { spellCrit = 9 }
+	T.eq(ns.Calc.Breakdown(v, ranks, d).talents.holyPower.contributions.spellCrit, 5)
+	local got = texts(ns, d, v, ranks)
+	T.eq(got[1], "Spell Crit 9.0% (talents +5.0%)")
+	T.eq(got[2], "Holy Power 5/5: +5.0%")
+end)
+
+T.test("Anticipation 5/5: defense and every avoidance stat", function()
+	local ns, d = load()
+	local c = ns.Calc.Breakdown({ defense = 300, dodge = 5, parry = 5, block = 5 }, { anticipation = 5 }, d).talents.anticipation.contributions
+	T.eq(c.defense, 20)
+	T.near(c.dodge, 0.8, 1e-9); T.near(c.parry, 0.8, 1e-9); T.near(c.block, 0.8, 1e-9)
+end)
