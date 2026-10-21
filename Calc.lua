@@ -16,11 +16,12 @@ local function listHas(list, value)
 	return false
 end
 
--- An effect applies only if every condition it carries (forms, weapons, shield) holds.
+-- An effect applies only if every condition it carries (forms, weapons, shield, pet) holds.
 local function conditionsMet(e, values)
 	if e.forms and not listHas(e.forms, values.form) then return false end
 	if e.weapons and not listHas(e.weapons, values.mainHand) then return false end
 	if e.shield and values.offHand ~= "shield" then return false end
+	if e.pet and values.pet ~= true then return false end
 	return true
 end
 Calc.ConditionsMet = conditionsMet
@@ -62,7 +63,7 @@ function Calc.Breakdown(values, ranks, classData)
 		local s, e = statEntry(effect.stat), talentEntry(a)
 		s.parts[#s.parts + 1] = {
 			key = a.t.key, name = a.t.name, amount = amount, op = effect.op,
-			forms = effect.forms, weapons = effect.weapons, shield = effect.shield,
+			forms = effect.forms, weapons = effect.weapons, shield = effect.shield, pet = effect.pet,
 			inactive = (not isActiveEffect) or nil,
 		}
 		if isActiveEffect then
@@ -177,7 +178,7 @@ function Calc.NextPoint(values, ranks, classData, key)
 			end
 			if not on then
 				res.inactiveForms[e.stat] = e.forms
-				res.inactiveConds[e.stat] = { forms = e.forms, weapons = e.weapons, shield = e.shield }
+				res.inactiveConds[e.stat] = { forms = e.forms, weapons = e.weapons, shield = e.shield, pet = e.pet }
 			end
 		end
 

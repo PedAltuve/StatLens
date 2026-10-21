@@ -41,12 +41,13 @@ local function weaponText(weapons)
 end
 
 -- Why a bonus is inactive, e.g. "in Cat Form", "with an Axe or Polearm", "with a shield".
--- `cond` is anything carrying forms / weapons / shield (an effect, a part, an inactiveConds entry).
+-- `cond` is anything carrying forms / weapons / shield / pet (an effect, a part, an inactiveConds entry).
 local function conditionText(cond)
 	local parts = {}
 	if cond and cond.forms then parts[#parts + 1] = "in " .. formText(cond.forms) end
 	if cond and cond.weapons and #cond.weapons > 0 then parts[#parts + 1] = "with " .. weaponText(cond.weapons) end
 	if cond and cond.shield then parts[#parts + 1] = "with a shield" end
+	if cond and cond.pet then parts[#parts + 1] = "with a pet active" end
 	if #parts == 0 then return "in other forms" end
 	return table.concat(parts, " and ")
 end

@@ -297,3 +297,38 @@ T.test("stubs reset clears ranged APIs", function()
 	S.reset()
 	T.eq(_G.UnitRangedAttackPower, nil); T.eq(_G.GetRangedCritChance, nil)
 end)
+
+T.test("Stats.Read pet from UnitExists", function()
+	local ns = load()
+	fullApi()
+	_G.UnitExists = function(unit) return unit == "pet" end
+	local r = ns.Stats.Read()
+	T.truthy(r.ok); T.eq(r.values.pet, true)
+	_G.UnitExists = function() return false end
+	T.eq(ns.Stats.Read().values.pet, false)
+	_G.UnitExists = nil
+	r = ns.Stats.Read()
+	T.truthy(r.ok); T.eq(r.values.pet, nil, "missing API")
+	_G.UnitExists = function() error("x") end
+	local okCall
+	okCall, r = pcall(ns.Stats.Read)
+	T.truthy(okCall); T.eq(r.values.pet, nil, "throwing API")
+end)
+
+T.test("Stats.Read secret pet", function()
+	local ns = load()
+	fullApi()
+	local secret = setmetatable({}, { __eq = function() error("compared secret") end })
+	_G.UnitExists = function() return secret end
+	_G.issecretvalue = function(v) return rawequal(v, secret) end
+	local okCall, r = pcall(ns.Stats.Read)
+	T.truthy(okCall, "no compare on secret")
+	T.eq(r.ok, false); T.eq(r.secret, true)
+	T.eq(r.values.pet, nil)
+end)
+
+T.test("stubs reset clears UnitExists", function()
+	_G.UnitExists = function() end
+	S.reset()
+	T.eq(_G.UnitExists, nil)
+end)

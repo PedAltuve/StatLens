@@ -265,3 +265,35 @@ T.test("ranged stats: flat rangedCrit and fromStat rangedAp", function()
 	T.near(b.stats.rangedAp.talentTotal, 60, 1e-9)
 	T.eq(b.stats.ap, nil, "melee ap untouched")
 end)
+
+T.test("ConditionsMet with pet", function()
+	local ns = load()
+	local e = { stat = "sp", op = "perLevel", pet = true, perRank = { 1 } }
+	T.eq(ns.Calc.ConditionsMet(e, { pet = true }), true)
+	T.eq(ns.Calc.ConditionsMet(e, { pet = false }), false)
+	T.eq(ns.Calc.ConditionsMet(e, {}), false, "unknown pet -> inactive")
+	T.eq(ns.Calc.ConditionsMet({ stat = "sp", op = "flat" }, { pet = false }), true, "no pet condition")
+	T.eq(ns.Calc.ConditionsMet({ stat = "sp", op = "flat", pet = true, forms = { "cat" } }, { pet = true, form = "bear" }), false)
+end)
+
+T.test("perLevel with pet: active and inactive", function()
+	local ns = load()
+	local d = synth({
+		T1("dk", { { stat = "sp", op = "perLevel", pet = true, perRank = { 0.5, 1.0 } } }, 2),
+	})
+	local b = ns.Calc.Breakdown({ sp = 100, int = 100, level = 25, pet = true }, { dk = 2 }, d)
+	T.near(part(b, "sp", "dk").amount, 25, 1e-9); T.near(b.stats.sp.talentTotal, 25, 1e-9)
+	T.eq(part(b, "sp", "dk").inactive, nil)
+
+	b = ns.Calc.Breakdown({ sp = 100, level = 25, pet = false }, { dk = 2 }, d)
+	local p = part(b, "sp", "dk")
+	T.eq(p.inactive, true); T.near(p.amount, 25, 1e-9); T.eq(p.pet, true)
+	T.eq(b.stats.sp.talentTotal, 0)
+	T.eq(b.talents.dk.contributions.sp, nil); T.near(b.talents.dk.inactive.sp, 25, 1e-9)
+
+	local n = ns.Calc.NextPoint({ sp = 100, level = 25 }, { dk = 1 }, d, "dk")
+	T.near(n.inactiveDeltas.sp, 12.5, 1e-9); T.eq(n.deltas.sp, nil)
+	T.eq(n.inactiveConds.sp.pet, true)
+	n = ns.Calc.NextPoint({ sp = 100, level = 25, pet = true }, { dk = 1 }, d, "dk")
+	T.near(n.deltas.sp, 12.5, 1e-9); T.eq(n.inactiveDeltas.sp, nil)
+end)

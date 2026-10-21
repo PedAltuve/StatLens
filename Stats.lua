@@ -103,6 +103,9 @@ local function readValues()
 		if hasSecret then v.defense = secret else v.defense = defBase + defMod end
 	end
 
+	-- A secret boolean is kept raw so Read() can flag it; never test it here.
+	v.pet = try(UnitExists, "pet")
+
 	v.mainHand = slotKind(16)
 	v.offHand = slotKind(17)
 
