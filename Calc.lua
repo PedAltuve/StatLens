@@ -26,6 +26,23 @@ local function conditionsMet(e, values)
 end
 Calc.ConditionsMet = conditionsMet
 
+-- Condition inputs (see Stats.Read unknownInputs) that ranked stat talents depend on.
+function Calc.UsedInputs(ranks, classData)
+	local used = {}
+	for _, t in ipairs(classData and classData.talents or {}) do
+		if t.kind == "stat" and (ranks and ranks[t.key] or 0) > 0 then
+			for _, e in ipairs(t.effects or {}) do
+				if e.forms then used.form = true end
+				if e.weapons then used.mainHand = true end
+				if e.shield then used.offHand = true end
+				if e.pet then used.pet = true end
+				if e.op == "perLevel" then used.level = true end
+			end
+		end
+	end
+	return used
+end
+
 -- Active stat talents: rank > 0, clamped to maxRank.
 local function active(ranks, classData)
 	local list = {}

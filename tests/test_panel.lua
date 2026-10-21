@@ -166,3 +166,36 @@ T.test("every displayable stat secret freezes out of combat", function()
 	CharacterFrame.scripts.OnShow(CharacterFrame)
 	T.eq(ns.Panel.pool[1] and ns.Panel.pool[1].text, "Frozen in combat")
 end)
+
+local function renderWithSecretInputs(extraTalent, ranks)
+	local ns = load(true)
+	_G.UnitStat = function(_, i) return 110, 110 end
+	_G.UnitLevel = function() return 25 end
+	_G.GetShapeshiftFormID = function() return 1 end
+	_G.UnitExists = function() return "pet-secret" end
+	_G.issecretvalue = function(v) return v == 25 or v == 1 or v == "pet-secret" end
+	if extraTalent then table.insert(ns.Data.SHAMAN.talents, extraTalent) end
+	S.fire("ADDON_LOADED", "StatLens")
+	S.fire("PLAYER_LOGIN")
+	ns.Talents.last = { ranks = ranks, spellIDs = {}, unmatched = {}, missing = {}, ok = true }
+	CharacterFrame:Show()
+	CharacterFrame.scripts.OnShow(CharacterFrame)
+	local texts = {}
+	for i, fs in ipairs(ns.Panel.pool) do if fs.shown ~= false and fs.text then texts[#texts + 1] = fs.text end end
+	return texts
+end
+
+T.test("secret condition inputs used by ranked talents render an unknown note", function()
+	local fake = { key = "fakeCond", name = "Fake", maxRank = 1, kind = "stat", effects = {
+		{ stat = "armor", op = "pct", forms = { "bear" }, perRank = { 0.1 } },
+		{ stat = "health", op = "perLevel", perRank = { 1 } },
+	} }
+	local texts = renderWithSecretInputs(fake, { ancestralKnowledge = 5, fakeCond = 1 })
+	T.eq(texts[1], "Intellect 110 (talents +10)")
+	T.eq(texts[#texts], "Unknown right now: form, level (talents that depend on them are not counted)")
+end)
+
+T.test("secret inputs no ranked talent depends on stay silent", function()
+	local texts = renderWithSecretInputs(nil, { ancestralKnowledge = 5 })
+	T.eq(texts[#texts], "Ancestral Knowledge 5/5: +10")
+end)

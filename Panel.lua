@@ -10,6 +10,7 @@ local COLORS = {
 }
 
 local lastLines, pending, warned
+local INPUT_LABELS = { form = "form", mainHand = "main-hand weapon", offHand = "off-hand item", level = "level", pet = "pet" }
 
 local function enabled() return not StatLensDB or StatLensDB.panelShown ~= false end
 
@@ -156,6 +157,15 @@ function Panel.Refresh()
 		if #labels > 0 then
 			lastLines[#lastLines + 1] = { text = "Unavailable right now: " .. table.concat(labels, ", "), indent = 0, kind = "note" }
 		end
+	end
+	-- Only inputs a ranked talent depends on; e.g. a secret pet state is noise for a Warrior.
+	local used, labels = ns.Calc.UsedInputs(talents.ranks, data), {}
+	for _, input in ipairs(stats.unknownInputs or {}) do
+		if used[input] then labels[#labels + 1] = INPUT_LABELS[input] or input end
+	end
+	if #labels > 0 then
+		lastLines[#lastLines + 1] = { text = "Unknown right now: " .. table.concat(labels, ", ")
+			.. " (talents that depend on them are not counted)", indent = 0, kind = "note" }
 	end
 	render(lastLines)
 end

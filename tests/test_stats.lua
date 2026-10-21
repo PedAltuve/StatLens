@@ -569,3 +569,34 @@ T.test("per-stat: Calc skips a fromStat part whose source is secret", function()
 	T.eq(b.talents.mentalDexterity, nil, "no AP from unreadable Intellect")
 	T.eq(b.stats.int, nil); T.eq(b.stats.ap, nil)
 end)
+
+T.test("Stats.Read lists secret condition inputs as unknownInputs", function()
+	local ns = load()
+	fullApi()
+	_G.UnitLevel = function() return 25 end
+	_G.GetShapeshiftFormID = function() return 1 end
+	_G.UnitExists = function() return "pet-secret" end
+	_G.GetInventoryItemID = function(_, slot) return slot == 16 and 5016 or 5017 end
+	_G.issecretvalue = function(v) return v == 25 or v == 1 or v == "pet-secret" or v == 5016 or v == 5017 end
+	local r = ns.Stats.Read()
+	T.eq(r.ok, true); T.eq(r.secret, false)
+	T.eq(table.concat(r.unknownInputs, ","), "form,mainHand,offHand,level,pet")
+end)
+
+T.test("Stats.Read: empty slots and plain inputs are not unknown", function()
+	local ns = load()
+	fullApi()
+	_G.GetInventoryItemID = function() return nil end
+	local r = ns.Stats.Read()
+	T.eq(#r.unknownInputs, 0)
+end)
+
+T.test("Stats.Read: secret item subclass makes the slot unknown", function()
+	local ns = load()
+	fullApi()
+	_G.GetInventoryItemID = function(_, slot) return slot == 16 and 5016 or nil end
+	_G.C_Item = { GetItemInfoInstant = function() return nil, nil, nil, nil, nil, 2, "sub-secret" end }
+	_G.issecretvalue = function(v) return v == "sub-secret" end
+	local r = ns.Stats.Read()
+	T.eq(table.concat(r.unknownInputs, ","), "mainHand")
+end)
