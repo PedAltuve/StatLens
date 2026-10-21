@@ -364,3 +364,128 @@ T.test("stubs reset clears UnitExists", function()
 	S.reset()
 	T.eq(_G.UnitExists, nil)
 end)
+
+-- Ordering recorder. A fake secret raises on ==, <, <=, arithmetic and indexing, but Lua 5.1 never
+-- calls a metamethod for `x ~= nil`, so a nil test is invisible. Instead every API stub logs a
+-- marker, and issecretvalue logs each value it sees (NIL for nil). "The first operation on each
+-- result is IsSecret" then means: right after the marker, the log holds that call's results in
+-- order, including nil ones, up to the first secret.
+local NIL = {}
+local function recorder(secret)
+	local log = {}
+	_G.issecretvalue = function(v)
+		log[#log + 1] = rawequal(v, nil) and NIL or v
+		return rawequal(v, secret)
+	end
+	local function api(marker, fn)
+		return function(...)
+			log[#log + 1] = marker
+			return fn(...)
+		end
+	end
+	local function checked(marker, expected)
+		for i, x in ipairs(log) do
+			if rawequal(x, marker) then
+				for j, want in ipairs(expected) do
+					T.truthy(rawequal(log[i + j], want), ("%s: result %d checked by IsSecret first"):format(marker, j))
+				end
+				return
+			end
+		end
+		T.truthy(false, marker .. " not called")
+	end
+	return api, checked
+end
+
+local function readSecret(ns)
+	local okCall, r = pcall(ns.Stats.Read)
+	T.truthy(okCall, "secret never inspected: " .. tostring(r))
+	if okCall then T.eq(r.ok, false); T.eq(r.secret, true) end
+end
+
+T.test("secret order: AP with only the negative buff secret", function()
+	for _, pos in ipairs({ 20, NIL }) do
+		local ns = load()
+		fullApi()
+		local secret = fakeSecret()
+		local api, checked = recorder(secret)
+		local p = pos ~= NIL and pos or nil
+		_G.UnitAttackPower = api("<AP>", function() return 100, p, secret end)
+		readSecret(ns)
+		checked("<AP>", { 100, pos, secret })
+	end
+end)
+
+T.test("secret order: ranged AP with only the base secret", function()
+	for _, pos in ipairs({ 120, NIL }) do
+		local ns = load()
+		fullApi()
+		local secret = fakeSecret()
+		local api, checked = recorder(secret)
+		local p = pos ~= NIL and pos or nil
+		_G.UnitRangedAttackPower = api("<RAP>", function() return secret, p, -8 end)
+		readSecret(ns)
+		checked("<RAP>", { secret })
+	end
+end)
+
+T.test("secret order: defense with only the base secret", function()
+	for _, mod in ipairs({ 12, NIL }) do
+		local ns = load()
+		fullApi()
+		local secret = fakeSecret()
+		local api, checked = recorder(secret)
+		local m = mod ~= NIL and mod or nil
+		_G.UnitDefense = api("<DEF>", function() return secret, m end)
+		readSecret(ns)
+		checked("<DEF>", { secret })
+	end
+end)
+
+T.test("secret order: spell power with one school secret mid-loop", function()
+	local ns = load()
+	fullApi()
+	local secret = fakeSecret()
+	local api, checked = recorder(secret)
+	local by = { [2] = 20, [3] = nil, [4] = 40, [5] = secret, [6] = 60, [7] = 70 }
+	local markers = {}
+	for school = 2, 7 do markers[school] = "<SP" .. school .. ">" end
+	_G.GetSpellBonusDamage = function(school) return api(markers[school], function() return by[school] end)() end
+	readSecret(ns)
+	checked(markers[2], { 20 }); checked(markers[3], { NIL }); checked(markers[4], { 40 })
+	checked(markers[5], { secret })
+end)
+
+T.test("plain spell power still takes the max over schools", function()
+	local ns = load()
+	fullApi()
+	_G.GetSpellBonusDamage = function(school) return ({ [2] = 20, [4] = 90, [6] = 60 })[school] end
+	local r = ns.Stats.Read()
+	T.truthy(r.ok); T.eq(r.values.sp, 90)
+	_G.GetSpellBonusDamage = function() return nil end
+	T.eq(ns.Stats.Read().values.sp, nil)
+end)
+
+T.test("multi-part reads with a missing part stay nil", function()
+	local ns = load()
+	fullApi()
+	_G.UnitAttackPower = function() return 100, 20 end
+	_G.UnitRangedAttackPower = function() return 300, nil, nil end
+	_G.UnitDefense = function() return 300 end
+	local r = ns.Stats.Read()
+	T.truthy(r.ok)
+	T.eq(r.values.ap, nil, "ap missing neg"); T.eq(r.values.rangedAp, nil, "rangedAp trailing nils")
+	T.eq(r.values.defense, nil, "defense missing modifier")
+end)
+
+T.test("secret order: equipped item id is checked before any nil test", function()
+	local ns = load()
+	fullApi()
+	local secret = fakeSecret()
+	local api, checked = recorder(secret)
+	_G.GetInventoryItemID = function(_, slot)
+		return api("<ITEM" .. slot .. ">", function() if slot == 17 then return secret end end)()
+	end
+	readSecret(ns)
+	checked("<ITEM16>", { NIL }); checked("<ITEM17>", { secret })
+end)

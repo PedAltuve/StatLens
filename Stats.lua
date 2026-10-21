@@ -16,8 +16,11 @@ Stats.WEAPONS = {
 -- Call fn(...) under pcall; return all results, or nothing on error / missing API.
 local function try(fn, ...)
 	if type(fn) ~= "function" then return end
-	local res = { pcall(fn, ...) }
-	if res[1] then return unpack(res, 2) end
+	-- Keep the exact result count: `#` on a table with nil holes is unreliable.
+	local res = { n = 0 }
+	local function pack(...) res.n = select("#", ...) for i = 1, res.n do res[i] = (select(i, ...)) end end
+	pack(pcall(fn, ...))
+	if res[1] then return unpack(res, 2, res.n) end
 end
 
 local function formName(id)
@@ -39,8 +42,8 @@ end
 -- returned raw so Read() can flag it.
 local function slotKind(slot)
 	local id = try(GetInventoryItemID, "player", slot)
-	if id == nil then return nil end
 	if ns.IsSecret(id) then return id end
+	if id == nil then return nil end
 	local info = C_Item and C_Item.GetItemInfoInstant
 	local _, _, _, _, _, classID, subClassID = try(info, id)
 	-- Never compare, concatenate or index with a secret; hand it back so Read() flags it.
@@ -48,6 +51,21 @@ local function slotKind(slot)
 	if hasSecret then return secret end
 	if classID == 2 then return Stats.WEAPONS[subClassID] or ("weapon:" .. tostring(subClassID)) end
 	if slot == 17 and classID == 4 then return subClassID == 6 and "shield" or "offhand" end
+end
+
+-- Sum of a multi-part read (base, buffs...). The secret check runs before any nil test or
+-- arithmetic: a secret component is returned as-is so Read() can flag it; any of the `n`
+-- expected parts missing gives nil.
+local function sumParts(n, ...)
+	local hasSecret, secret = firstSecret(...)
+	if hasSecret then return secret end
+	local total = 0
+	for i = 1, n do
+		local x = select(i, ...)
+		if x == nil then return nil end
+		total = total + x
+	end
+	return total
 end
 
 local function readValues()
@@ -58,26 +76,15 @@ local function readValues()
 		v[name] = effective
 	end
 
-	local base, pos, neg = try(UnitAttackPower, "player")
-	if base ~= nil and pos ~= nil and neg ~= nil then
-		-- A secret component poisons the sum; keep it as-is so the caller can detect it.
-		local hasSecret, secret = firstSecret(base, pos, neg)
-		if hasSecret then v.ap = secret else v.ap = base + pos + neg end
-	end
-
-	local rBase, rPos, rNeg = try(UnitRangedAttackPower, "player")
-	if rBase ~= nil and rPos ~= nil and rNeg ~= nil then
-		local hasSecret, secret = firstSecret(rBase, rPos, rNeg)
-		if hasSecret then v.rangedAp = secret else v.rangedAp = rBase + rPos + rNeg end
-	end
+	v.ap = sumParts(3, try(UnitAttackPower, "player"))
+	v.rangedAp = sumParts(3, try(UnitRangedAttackPower, "player"))
 
 	local sp
 	for school = 2, 7 do
 		local x = try(GetSpellBonusDamage, school)
-		if x ~= nil then
-			if ns.IsSecret(x) then sp = x break end
-			if sp == nil or x > sp then sp = x end
-		end
+		-- Secret check first: only a known-plain value may be nil-tested or compared.
+		if ns.IsSecret(x) then sp = x break end
+		if x ~= nil and (sp == nil or x > sp) then sp = x end
 	end
 	v.sp = sp
 
@@ -97,11 +104,7 @@ local function readValues()
 	v.armor = armor
 
 	v.block = try(GetBlockChance)
-	local defBase, defMod = try(UnitDefense, "player")
-	if defBase ~= nil and defMod ~= nil then
-		local hasSecret, secret = firstSecret(defBase, defMod)
-		if hasSecret then v.defense = secret else v.defense = defBase + defMod end
-	end
+	v.defense = sumParts(2, try(UnitDefense, "player"))
 
 	-- Pet state only gates `pet` effects; a secret answer means unknown (inactive) rather than
 	-- flagging the whole read. Never test the value before the secret check.
