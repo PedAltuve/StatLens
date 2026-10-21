@@ -11,6 +11,7 @@ local function load()
 	S.loadAddonFile("Data/Paladin.lua", ns)
 	S.loadAddonFile("Data/Mage.lua", ns)
 	S.loadAddonFile("Data/Hunter.lua", ns)
+	S.loadAddonFile("Data/Rogue.lua", ns)
 	S.loadAddonFile("Talents.lua", ns)
 	return ns
 end
@@ -53,7 +54,7 @@ local KINDS = { stat = 1, conditional = 1, utility = 1 }
 
 T.test("data integrity (all classes)", function()
 	local ns = load()
-	local expected = { SHAMAN = 50, DRUID = 52, WARRIOR = 52, PRIEST = 52, PALADIN = 50, MAGE = 55, HUNTER = 51 }
+	local expected = { SHAMAN = 50, DRUID = 52, WARRIOR = 52, PRIEST = 52, PALADIN = 50, MAGE = 55, HUNTER = 51, ROGUE = 53 }
 	local classes = 0
 	for class, d in pairs(ns.Data) do
 		classes = classes + 1
@@ -77,7 +78,7 @@ T.test("data integrity (all classes)", function()
 			if t.kind == "stat" then T.truthy(t.effects and #t.effects > 0, "effects " .. id) end
 		end
 	end
-	T.eq(classes, 7)
+	T.eq(classes, 8)
 	T.eq(ns.Data.SHAMAN.tree, "Enhancement"); T.eq(ns.Data.DRUID.tree, "Feral Combat")
 end)
 
@@ -438,4 +439,44 @@ T.test("Read matches one hunter talent per tree", function()
 	T.eq(#r.unmatched, 0)
 	T.eq(ns.Talents.ByName("Careful Aim").tree, "Marksmanship")
 	T.eq(ns.Talents.ByName("Lightning Reflexes").tree, "Survival")
+end)
+
+T.test("rogue: 53 unique talents, 17/17/19 split", function()
+	local ns = load()
+	local d = ns.Data.ROGUE
+	T.eq(d.tree, "Assassination"); T.eq(#d.talents, 53)
+	local names, trees = {}, {}
+	for _, t in ipairs(d.talents) do
+		T.truthy(not names[t.name], "unique name " .. t.name)
+		names[t.name] = true
+		local tree = t.tree or "Assassination"
+		trees[tree] = (trees[tree] or 0) + 1
+	end
+	T.eq(trees.Assassination, 17); T.eq(trees.Combat, 17); T.eq(trees.Subtlety, 19)
+end)
+
+T.test("Read matches one rogue talent per tree", function()
+	local ns = load()
+	_G.UnitClass = function() return "Rogue", "ROGUE" end
+	local spells = { [1] = "Malice", [2] = "Hack and Slash", [3] = "Serrated Blades" }
+	local nodes = {
+		[1] = { ID = 1, entryIDs = { 1 }, currentRank = 5 },
+		[2] = { ID = 2, entryIDs = { 2 }, currentRank = 4 },
+		[3] = { ID = 3, entryIDs = { 3 }, currentRank = 2 },
+	}
+	_G.C_ClassTalents = { GetActiveConfigID = function() return 9 end }
+	_G.C_Spell = { GetSpellName = function(id) return spells[id] end }
+	_G.C_Traits = {
+		GetConfigInfo = function() return { treeIDs = { 7 } } end,
+		GetTreeNodes = function() return { 1, 2, 3 } end,
+		GetNodeInfo = function(_, id) return nodes[id] end,
+		GetEntryInfo = function(_, e) return { definitionID = e } end,
+		GetDefinitionInfo = function(d) return { spellID = d } end,
+	}
+	local r = ns.Talents.Read()
+	T.eq(r.ranks.malice, 5); T.eq(r.ranks.hackAndSlash, 4); T.eq(r.ranks.serratedBlades, 2)
+	T.eq(#r.unmatched, 0)
+	T.eq(ns.Talents.ByName("Hack and Slash").tree, "Combat")
+	T.eq(ns.Talents.ByName("Serrated Blades").tree, "Subtlety")
+	T.eq(ns.Talents.ByName("Lightning Reflexes").tree, "Combat", "rogue's own Lightning Reflexes")
 end)
