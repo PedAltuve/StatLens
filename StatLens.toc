@@ -13,6 +13,7 @@ Data/Priest.lua
 Data/Paladin.lua
 Data/Mage.lua
 Data/Hunter.lua
+Data/Rogue.lua
 Talents.lua
 Stats.lua
 Calc.lua

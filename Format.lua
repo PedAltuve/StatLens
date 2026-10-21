@@ -30,9 +30,12 @@ local function formText(forms)
 	return table.concat(names, " or ") .. " Form"
 end
 
+-- Display names for weapon kinds whose capitalized key is not a weapon name on its own.
+local WEAPON_NAMES = { fist = "Fist Weapon" }
+
 local function weaponText(weapons)
 	local names = {}
-	for i, w in ipairs(weapons) do names[i] = w:sub(1, 1):upper() .. w:sub(2) end
+	for i, w in ipairs(weapons) do names[i] = WEAPON_NAMES[w] or (w:sub(1, 1):upper() .. w:sub(2)) end
 	local article = names[1]:find("^[AEIOU]") and "an" or "a"
 	return article .. " " .. table.concat(names, " or ")
 end
