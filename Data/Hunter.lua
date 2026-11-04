@@ -118,7 +118,7 @@ ns.Data.HUNTER = {
 		},
 		{
 			key = "trueshotAura", name = "Trueshot Aura", maxRank = 1, kind = "conditional", tree = "Marksmanship",
-			explain = "Grants Trueshot Aura: increases the Ranged Attack Power of party or raid members within 45 yds by 30 (already included in the sheet while active).",
+			explain = "Grants Trueshot Aura: increases the Ranged Attack Power of party or raid members within 45 yds by 20 (already included in the sheet while active).",
 		},
 		{
 			key = "mortalShots", name = "Mortal Shots", maxRank = 5, kind = "conditional", tree = "Marksmanship",
@@ -134,7 +134,7 @@ ns.Data.HUNTER = {
 		},
 		{
 			key = "barrage", name = "Barrage", maxRank = 3, kind = "conditional", tree = "Marksmanship",
-			explain = "Increases the damage of Multi-Shot, Aimed Shot and Volley by 3/6/10%.",
+			explain = "Increases the damage of Multi-Shot, Aimed Shot and Volley by 5% per rank.",
 		},
 		{
 			key = "scatterShot", name = "Scatter Shot", maxRank = 1, kind = "utility", tree = "Marksmanship",
@@ -146,7 +146,7 @@ ns.Data.HUNTER = {
 		},
 		{
 			key = "sniperShot", name = "Sniper Shot", maxRank = 1, kind = "utility", tree = "Marksmanship",
-			explain = "Grants Sniper Shot: a long-range shot that also increases the range of your next 3 Shots by 10 yards for 10 sec.",
+			explain = "Grants Sniper Shot: a long-range shot that deals ranged damage plus 320 and increases the range of your next 3 Shots by 10 yards for 10 sec.",
 		},
 		{
 			key = "improvedTracking", name = "Improved Tracking", maxRank = 5, kind = "conditional", tree = "Survival",
@@ -217,8 +217,8 @@ ns.Data.HUNTER = {
 		},
 		{
 			key = "lightningReflexes", name = "Lightning Reflexes", maxRank = 5, kind = "stat", tree = "Survival",
-			effects = { { stat = "agi", op = "pct", perRank = { 0.02, 0.04, 0.06, 0.08, 0.10 } } },
-			explain = "Increases your Agility by 2% per rank.",
+			effects = { { stat = "agi", op = "pct", perRank = { 0.03, 0.06, 0.09, 0.12, 0.15 } } },
+			explain = "Increases your Agility by 3% per rank.",
 		},
 		{
 			key = "laceratingStrikes", name = "Lacerating Strikes", maxRank = 1, kind = "conditional", tree = "Survival",
