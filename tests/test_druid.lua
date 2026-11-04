@@ -35,13 +35,61 @@ T.test("druid data spot checks", function()
 	local ns, d = load()
 	local byKey = {}
 	for _, t in ipairs(d.talents) do byKey[t.key] = t end
-	T.eq(byKey.thickHide.inferred.rank, true)
+	T.eq(byKey.thickHide.inferred, nil, "live ranks no longer inferred")
 	T.eq(byKey.thickHide.effects[1].op, "perLevel")
 	T.eq(byKey.heartOfTheWild.effects[2].forms[1], "bear")
 	T.eq(byKey.leaderOfThePack.effects[1].perRank[1], 3)
 	T.eq(byKey.naturalInstinct.effects[1].stat, "heal")
 	T.eq(byKey.naturesMajesty.tree, "Balance")
-	T.eq(byKey.berserk.kind, "conditional")
+	T.eq(byKey.berserk, nil)
+end)
+
+T.test("druid live 70755 roster and ranks", function()
+	local _, d = load()
+	local expected = {
+		Balance = {
+			improvedWrath = 5, genesis = 5, moonglow = 3, improvedMoonfire = 2,
+			naturesMajesty = 2, naturesReach = 2, improvedEntanglingRoots = 3,
+			naturesSplendor = 1, insectSwarm = 1, vengeance = 5, improvedStarfire = 5,
+			overgrowth = 2, naturesGrace = 1, eclipse = 3, moonfury = 5, moonkinForm = 1,
+		},
+		["Feral Combat"] = {
+			ferocity = 5, furor = 5, feralSwiftness = 2, feralInstinct = 3, brutalImpact = 2,
+			thickHide = 3, shreddingAttacks = 3, savageFury = 2, feralCharge = 1,
+			sharpenedClaws = 2, predatoryStrikes = 3, lacerate = 1, predatoryDiscipline = 1,
+			bloodFrenzy = 2, leaderOfThePack = 1, naturalInstinct = 2, naturalReaction = 5,
+			primalBite = 1, shiftingPower = 1, rendAndTear = 5,
+		},
+		Restoration = {
+			naturesFocus = 5, heartOfTheWild = 5, naturalist = 5, reflection = 3,
+			naturalShapeshifter = 3, subtlety = 3, giftOfNature = 5, bloom = 1,
+			tranquilSpirit = 5, improvedRejuvenation = 3, swiftmend = 1,
+			naturesSwiftness = 1, livingSpirit = 3, improvedTranquility = 2,
+			improvedRegrowth = 5, wildGrowth = 1,
+		},
+	}
+	local byKey = {}
+	for _, t in ipairs(d.talents) do byKey[t.key] = t end
+	for tree, talents in pairs(expected) do
+		for key, rank in pairs(talents) do
+			local t = byKey[key]
+			T.truthy(t, "live talent " .. key)
+			if t then
+				T.eq(t.maxRank, rank, key .. " ranks")
+				T.eq(t.tree or d.tree, tree, key .. " tree")
+			end
+		end
+	end
+	for _, key in ipairs({ "improvedShiftingPower", "berserk", "giftOfTheEarthmother" }) do
+		T.eq(byKey[key], nil, "not live: " .. key)
+	end
+	for key, name in pairs({ lacerate = "Lacerate", predatoryDiscipline = "Predatory Discipline", bloom = "Bloom" }) do
+		local t = byKey[key]
+		if t then
+			T.eq(t.name, name)
+			T.eq(t.effects, nil, key .. " has no sheet-stat effect")
+		end
+	end
 end)
 
 T.test("panel lines, cat form", function()
@@ -83,14 +131,14 @@ T.test("panel lines, no form: all form effects inactive", function()
 	T.eq(got[11], "0|stat|Dodge 10.0% (talents +4.0%)", "unconditional dodge stays active")
 end)
 
-T.test("armor perLevel text and inferred marker", function()
+T.test("armor perLevel text uses verified live ranks", function()
 	local ns, d = load()
 	local ranks = { thickHide = 2 }
 	local v = { armor = 1000, level = 25, form = "bear" }
 	local got = dump(ns.Format.Lines(ns.Calc.Breakdown(v, ranks, d), ranks, d))
 	T.eq(got[1], "0|stat|Armor 1000 (talents +50)")
-	T.eq(got[2], "1|part|Thick Hide* 2/3: +50 (2 per level)")
-	T.eq(got[3], "0|note|* rank value inferred, verify in game")
+	T.eq(got[2], "1|part|Thick Hide 2/3: +50 (2 per level)")
+	T.eq(#got, 2)
 end)
 
 T.test("TooltipLines with inactive contributions and next point", function()

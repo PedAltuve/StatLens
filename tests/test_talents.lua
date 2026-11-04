@@ -204,7 +204,7 @@ T.test("Read matches Elemental and Restoration talents by name", function()
 	T.eq(ns.Talents.ByName("Concussion").tree, "Elemental Combat")
 end)
 
-T.test("druid: 52 unique talents across three trees", function()
+T.test("druid: 52 live talents across three trees", function()
 	local ns = load()
 	local d = ns.Data.DRUID
 	T.eq(#d.talents, 52)
