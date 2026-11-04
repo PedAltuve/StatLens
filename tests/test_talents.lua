@@ -55,7 +55,7 @@ local KINDS = { stat = 1, conditional = 1, utility = 1 }
 
 T.test("data integrity (all classes)", function()
 	local ns = load()
-	local expected = { SHAMAN = 50, DRUID = 52, WARRIOR = 52, PRIEST = 52, PALADIN = 50, MAGE = 55, HUNTER = 51, ROGUE = 53, WARLOCK = 52 }
+	local expected = { SHAMAN = 50, DRUID = 52, WARRIOR = 52, PRIEST = 52, PALADIN = 50, MAGE = 53, HUNTER = 51, ROGUE = 53, WARLOCK = 52 }
 	local classes = 0
 	for class, d in pairs(ns.Data) do
 		classes = classes + 1
@@ -364,10 +364,10 @@ T.test("Read matches one paladin talent per tree", function()
 	T.eq(ns.Talents.ByName("Champion of the Light").tree, "Retribution")
 end)
 
-T.test("mage: 55 unique talents, 19/17/19 split", function()
+T.test("mage: 53 unique talents, 18/17/18 split", function()
 	local ns = load()
 	local d = ns.Data.MAGE
-	T.eq(d.tree, "Arcane"); T.eq(#d.talents, 55)
+	T.eq(d.tree, "Arcane"); T.eq(#d.talents, 53)
 	local names, trees = {}, {}
 	for _, t in ipairs(d.talents) do
 		T.truthy(not names[t.name], "unique name " .. t.name)
@@ -375,7 +375,7 @@ T.test("mage: 55 unique talents, 19/17/19 split", function()
 		local tree = t.tree or "Arcane"
 		trees[tree] = (trees[tree] or 0) + 1
 	end
-	T.eq(trees.Arcane, 19); T.eq(trees.Fire, 17); T.eq(trees.Frost, 19)
+	T.eq(trees.Arcane, 18); T.eq(trees.Fire, 17); T.eq(trees.Frost, 18)
 end)
 
 T.test("Read matches one mage talent per tree", function()

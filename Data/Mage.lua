@@ -1,6 +1,6 @@
 local ADDON, ns = ...
 
--- Source: Forever talent tooltips (see odd/sources/mage-trees.txt).
+-- Source: Forever LIVE talent tooltips, build 1.60.1.70755 (odd/sources/mage-trees-70755.txt).
 -- Percent values are fractions; flat hit/crit values are percentage points.
 -- School-only hit and crit talents are conditional: the sheet shows generic spell hit and crit.
 ns.Data = ns.Data or {}
@@ -13,16 +13,12 @@ ns.Data.MAGE = {
 			explain = "Increases your damage with Wands by 13% at rank 1 and 25% at rank 2.",
 		},
 		{
-			key = "arcaneFocus", name = "Arcane Focus", maxRank = 5, kind = "conditional",
-			explain = "Improves your chance to hit with Arcane spells by 1% per rank (not shown in the sheet's spell hit).",
-		},
-		{
 			key = "improvedChanneling", name = "Improved Channeling", maxRank = 5, kind = "conditional",
 			explain = "Gives Arcane Missiles a 20% chance per rank, and Arcane Blast and Arcane Wrath 14% per rank, to lose no casting time when you take damage.",
 		},
 		{
 			key = "missileBarrage", name = "Missile Barrage", maxRank = 2, kind = "conditional",
-			explain = "Your damage spells can make your next Arcane Missiles free, faster and twice as quick to fire (Arcane Blast 20% per rank, others 10% per rank).",
+			explain = "Arcane Blast (20% per rank) and Arcane Wrath, Fireball, Frostbolt and Frostfire Bolt (10% per rank) can make your next Arcane Missiles free, halve its channeled duration and fire missiles every 0.5 sec.",
 		},
 		{
 			key = "arcaneSubtlety", name = "Arcane Subtlety", maxRank = 2, kind = "conditional",
@@ -30,16 +26,16 @@ ns.Data.MAGE = {
 		},
 		{
 			key = "magicAbsorption", name = "Magic Absorption", maxRank = 2, kind = "conditional",
-			explain = "Increases all resistances by 5 per rank (resistances are not tracked by StatLens) and fully resisted spells restore 1% of your mana per rank.",
+			explain = "Increases all resistances by 5 per rank (resistances are not tracked by StatLens) and fully resisted spells restore 1% of your total mana per rank, at most once per sec.",
 		},
 		{
 			key = "arcaneConcentration", name = "Arcane Concentration", maxRank = 5, kind = "conditional",
 			explain = "Gives a 2% chance per rank to enter Clearcasting after a damage spell hits, making your next damage spell free.",
 		},
 		{
-			key = "arcaneResilience", name = "Arcane Resilience", maxRank = 2, kind = "stat",
-			effects = { { stat = "armor", op = "fromStat", source = "int", perRank = { 0.25, 0.50 } } },
-			explain = "Increases your Armor by 25% of your Intellect per rank.",
+			key = "arcaneResilience", name = "Arcane Resilience", maxRank = 3, kind = "stat",
+			effects = { { stat = "armor", op = "fromStat", source = "int", perRank = { 0.25, 0.50, 0.75 } } },
+			explain = "Increases your Armor by 25% / 50% / 75% of your Intellect.",
 		},
 		{
 			key = "arcaneGeometry", name = "Arcane Geometry", maxRank = 2, kind = "utility",
@@ -51,7 +47,7 @@ ns.Data.MAGE = {
 		},
 		{
 			key = "arcaneBlast", name = "Arcane Blast", maxRank = 1, kind = "utility",
-			explain = "Grants Arcane Blast: each cast adds 15% of your Intellect as spell damage and raises its mana cost, stacking up to 4 times.",
+			explain = "Grants Arcane Blast: each cast adds 12% of your Intellect as spell damage and increases Arcane Blast's mana cost by 100%, stacking up to 4 times for 18 sec from the initial application.",
 		},
 		{
 			key = "arcaneShielding", name = "Arcane Shielding", maxRank = 2, kind = "conditional",
@@ -95,12 +91,12 @@ ns.Data.MAGE = {
 			explain = "Reduces the cooldown of Fire Blast by 1 sec per rank and increases its range by 8/15 yards.",
 		},
 		{
-			key = "incineration", name = "Incineration", maxRank = 3, kind = "conditional", tree = "Fire",
+			key = "incineration", name = "Incineration", maxRank = 5, kind = "conditional", tree = "Fire",
 			explain = "Increases the critical strike chance of Fire Blast, Ice Lance, Arcane Blast and Scorch by 2% per rank.",
 		},
 		{
-			key = "improvedFireball", name = "Improved Fireball", maxRank = 5, kind = "utility", tree = "Fire",
-			explain = "Reduces the cast time of Fireball and Frostfire Bolt by 0.1 sec per rank.",
+			key = "accelerant", name = "Accelerant", maxRank = 5, kind = "utility", tree = "Fire",
+			explain = "Reduces the cast time of Fireball, Frostfire Bolt and Arcane Wrath by 0.1 sec per rank.",
 		},
 		{
 			key = "ignite", name = "Ignite", maxRank = 5, kind = "conditional", tree = "Fire",
@@ -116,7 +112,7 @@ ns.Data.MAGE = {
 		},
 		{
 			key = "burningSoul", name = "Burning Soul", maxRank = 3, kind = "conditional", tree = "Fire",
-			explain = "Gives your Fire spells a 23% chance per rank to lose no casting time when you take damage and reduces their threat by 10% per rank.",
+			explain = "Gives your Fire spells a 23/47/70% chance to lose no casting time when you take damage and reduces their threat by 10% per rank.",
 		},
 		{
 			key = "improvedFlamestrike", name = "Improved Flamestrike", maxRank = 3, kind = "conditional", tree = "Fire",
@@ -128,7 +124,7 @@ ns.Data.MAGE = {
 		},
 		{
 			key = "improvedScorch", name = "Improved Scorch", maxRank = 3, kind = "conditional", tree = "Fire",
-			explain = "Scorch has a 33% chance per rank to make the target take 3% more Fire damage from you, stacking up to 5 times.",
+			explain = "Scorch has a 33/67/100% chance to make the target take 3% more Fire damage from you for 30 sec, stacking up to 5 times.",
 		},
 		{
 			key = "improvedFireWard", name = "Improved Fire Ward", maxRank = 2, kind = "conditional", tree = "Fire",
@@ -136,14 +132,14 @@ ns.Data.MAGE = {
 		},
 		{
 			key = "heatingUp", name = "Heating Up", maxRank = 1, kind = "conditional", tree = "Fire",
-			explain = "Crits with Fireball, Frostfire Bolt, Fire Blast and Scorch reduce the cast time of your next Pyroblast by 25%, stacking up to 3 times.",
+			explain = "Non-periodic crits with Fireball, Frostfire Bolt, Fire Blast and Scorch reduce the cast time of your next Pyroblast within 20 sec by 25%, stacking up to 3 times. Fire Blast grants an additional stack whenever it deals damage.",
 		},
 		{
 			key = "masterOfElements", name = "Master of Elements", maxRank = 3, kind = "conditional", tree = "Fire",
 			explain = "Your Fire and Frost crits refund 10% per rank of their base mana cost.",
 		},
 		{
-			key = "criticalMass", name = "Critical Mass", maxRank = 5, kind = "conditional", tree = "Fire",
+			key = "criticalMass", name = "Critical Mass", maxRank = 3, kind = "conditional", tree = "Fire",
 			explain = "Increases the critical strike chance of your Fire spells by 2% per rank (not shown in the sheet's crit).",
 		},
 		{
@@ -152,23 +148,24 @@ ns.Data.MAGE = {
 		},
 		{
 			key = "firePower", name = "Fire Power", maxRank = 3, kind = "conditional", tree = "Fire",
-			explain = "Increases your Fire spell damage by 1% per rank for each of your Fire effects on the target, up to 4% per rank.",
+			explain = "Increases your Fire spell damage by 1% per rank for each of your Fire effects on the target, up to 4% per rank; mixed-school effects do not qualify.",
 		},
 		{
 			key = "combustion", name = "Combustion", maxRank = 1, kind = "conditional", tree = "Fire",
-			explain = "Grants Combustion: each Fire spell hit adds 10% Fire crit chance until you land 3 Fire crits (3 min cooldown).",
+			explain = "Grants Combustion: each Fire spell hit adds 10% Fire crit chance until you land 3 non-periodic Fire crits (3 min cooldown).",
 		},
 		{
 			key = "frostWarding", name = "Frost Warding", maxRank = 2, kind = "conditional", tree = "Frost",
-			explain = "Increases the Armor and resistance of Frost Armor and Ice Armor by 15% per rank and gives Frost Ward a 10% chance per rank to reflect Frost spells.",
+			explain = "Increases Frost Armor and Ice Armor's Armor and resistances by 15% per rank, gives Frost Ward a 10% chance per rank to negate the warded damage spell, and increases Ice Barrier and Frost Ward absorption by 10% per rank.",
 		},
 		{
 			key = "improvedFrostbolt", name = "Improved Frostbolt", maxRank = 5, kind = "utility", tree = "Frost",
 			explain = "Reduces the cast time of Frostbolt and Frost Blast by 0.1 sec per rank.",
 		},
 		{
-			key = "elementalPrecision", name = "Elemental Precision", maxRank = 5, kind = "conditional", tree = "Frost",
-			explain = "Improves your chance to hit with Frost and Fire spells by 1% per rank (not shown in the sheet's spell hit).",
+			key = "precision", name = "Precision", maxRank = 3, kind = "stat", tree = "Frost",
+			effects = { { stat = "spellHit", op = "flat", perRank = { 2, 4, 6 } } },
+			explain = "Improves your chance to hit with all spells by 2% per rank.",
 		},
 		{
 			key = "iceShards", name = "Ice Shards", maxRank = 5, kind = "conditional", tree = "Frost",
@@ -187,16 +184,12 @@ ns.Data.MAGE = {
 			explain = "Increases the duration of your Chill effects by 11% at rank 1 and 33% at rank 3, and slows the target further.",
 		},
 		{
-			key = "piercingIce", name = "Piercing Ice", maxRank = 3, kind = "conditional", tree = "Frost",
-			explain = "Increases the damage of your Frost spells by 2% per rank.",
-		},
-		{
 			key = "frostChanneling", name = "Frost Channeling", maxRank = 3, kind = "conditional", tree = "Frost",
 			explain = "Reduces the mana cost of your Frost spells by 5% per rank and their threat by 10% per rank.",
 		},
 		{
 			key = "iceLance", name = "Ice Lance", maxRank = 1, kind = "utility", tree = "Frost",
-			explain = "Grants Ice Lance: an instant Frost attack that deals 200% more damage to frozen targets.",
+			explain = "Grants Ice Lance: an instant Frost attack that deals 300% increased damage to frozen targets.",
 		},
 		{
 			key = "improvedBlizzard", name = "Improved Blizzard", maxRank = 3, kind = "conditional", tree = "Frost",
@@ -204,7 +197,7 @@ ns.Data.MAGE = {
 		},
 		{
 			key = "arcticReach", name = "Arctic Reach", maxRank = 2, kind = "utility", tree = "Frost",
-			explain = "Increases the range of Frostbolt, Frost Blast and Blizzard and the radius of Frost Nova and Cone of Cold by 10% per rank.",
+			explain = "Increases the range of Frostbolt, Frost Blast, Ice Lance and Blizzard and the radius of Frost Nova and Cone of Cold by 10% per rank.",
 		},
 		{
 			key = "iceBlock", name = "Ice Block", maxRank = 1, kind = "utility", tree = "Frost",
@@ -224,15 +217,15 @@ ns.Data.MAGE = {
 		},
 		{
 			key = "fingersOfFrost", name = "Fingers of Frost", maxRank = 2, kind = "conditional", tree = "Frost",
-			explain = "Your Chill effects have a 15% chance to treat your next spell (2 spells at rank 2) as if the target were frozen.",
+			explain = "Your Chill effects have a 15% chance to treat your next spell (2 spells at rank 2) as if the target were frozen. Lasts 15 sec.",
 		},
 		{
 			key = "wintersChill", name = "Winter's Chill", maxRank = 5, kind = "conditional", tree = "Frost",
-			explain = "Frostbolt, Frost Blast and empowered Ice Lance have a 20% chance per rank to empower your next Cone of Cold, stacking up to 5 times.",
+			explain = "Frostbolt, Frost Blast and Fingers of Frost empowered Ice Lance have a 20% chance per rank to apply Winter's Chill: your next Cone of Cold deals 20% increased damage to the target and gains an additional 7% of your spell damage, stacking up to 5 times.",
 		},
 		{
 			key = "iceBarrier", name = "Ice Barrier", maxRank = 1, kind = "utility", tree = "Frost",
-			explain = "Grants Ice Barrier: a shield that absorbs damage and prevents cast interruption while it holds (30 sec cooldown).",
+			explain = "Grants Ice Barrier: absorbs 448 + 10% of Frost Spell Power damage and increases your Frost damage by 15% for 1 min. While shielded, your Frost damage increases by an additional 5% and damage does not interrupt casting.",
 		},
 	},
 }
