@@ -197,7 +197,7 @@ ns.Data.WARRIOR = {
 		},
 		{
 			key = "defiance", name = "Defiance", maxRank = 3, kind = "conditional", tree = "Protection",
-			explain = "Increases threat generated in Defensive Stance by an additional 5% per rank while a shield is equipped.",
+			explain = "Increases threat generated in Defensive Stance by an additional 7% at rank 1, up to 20% at rank 3, while a shield is equipped.",
 		},
 		{
 			key = "improvedSunderArmor", name = "Improved Sunder Armor", maxRank = 3, kind = "utility", tree = "Protection",
