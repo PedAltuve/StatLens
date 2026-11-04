@@ -1,6 +1,6 @@
 local ADDON, ns = ...
 
--- Source: Forever talent tooltips (see odd/sources/priest-trees.txt).
+-- Source: Forever build 1.60.1.70755 talent tooltips (see odd/sources/priest-trees-70755.txt).
 -- Percent values are fractions. School-only hit/crit talents are conditional: the sheet shows
 -- generic spell hit/crit, not per-school values.
 ns.Data = ns.Data or {}
@@ -71,7 +71,7 @@ ns.Data.PRIEST = {
 		},
 		{
 			key = "renewedHope", name = "Renewed Hope", maxRank = 5, kind = "conditional",
-			explain = "Your direct heals gain 2% critical chance per rank on targets with Weakened Soul and shorten it by 1 sec per rank.",
+			explain = "Flash Heal, Lesser Heal, Heal, Greater Heal and Penance gain 2% critical chance per rank on targets with Weakened Soul and shorten its remaining duration by 1 sec per rank.",
 		},
 		{
 			key = "divineAegis", name = "Divine Aegis", maxRank = 3, kind = "conditional",
@@ -107,7 +107,7 @@ ns.Data.PRIEST = {
 		},
 		{
 			key = "blessedRecovery", name = "Blessed Recovery", maxRank = 3, kind = "conditional", tree = "Holy",
-			explain = "After a crit or a big hit against you, heals 8% at rank 1 (25% at rank 3) of the damage taken over 6 sec.",
+			explain = "After a melee or ranged crit, or a single attack dealing more than 30% of your maximum health, heals 8% at rank 1 (25% at rank 3) of the damage over 6 sec; refreshes carry over remaining healing.",
 		},
 		{
 			key = "inspiration", name = "Inspiration", maxRank = 3, kind = "conditional", tree = "Holy",
@@ -126,8 +126,8 @@ ns.Data.PRIEST = {
 			explain = "Increases your Holy damage by 2% at rank 1 and 5% at rank 2; Holy Fire ticks can make your next Holy Nova free.",
 		},
 		{
-			key = "bindingHeal", name = "Binding Heal", maxRank = 1, kind = "utility", tree = "Holy",
-			explain = "Grants Binding Heal: heals a friendly target and yourself.",
+			key = "holyBinding", name = "Holy Binding", maxRank = 1, kind = "conditional", tree = "Holy",
+			explain = "Flash Heal on another target also heals you for 50% as much, generating no threat.",
 		},
 		{
 			key = "litanyOfLight", name = "Litany of Light", maxRank = 2, kind = "conditional", tree = "Holy",
@@ -141,10 +141,9 @@ ns.Data.PRIEST = {
 			key = "spiritualGuidance", name = "Spiritual Guidance", maxRank = 5, kind = "stat", tree = "Holy",
 			effects = {
 				{ stat = "heal", op = "fromStat", source = "spirit", perRank = { 0.05, 0.10, 0.15, 0.20, 0.25 } },
-				{ stat = "sp", op = "fromStat", source = "spirit", perRank = { 0.01, 0.0275, 0.045, 0.0625, 0.08 } },
+				{ stat = "sp", op = "fromStat", source = "spirit", perRank = { 0.01, 0.03, 0.05, 0.06, 0.08 } },
 			},
-			explain = "Increases spell healing by 5% per rank of your total Spirit and spell damage by 1% at rank 1 up to 8% at rank 5; middle-rank spell damage values are inferred.",
-			inferred = { rank = true },
+			explain = "Increases spell healing by 5% per rank of your total Spirit and spell damage by 1/3/5/6/8% of your total Spirit by rank.",
 		},
 		{
 			key = "spiritualHealing", name = "Spiritual Healing", maxRank = 3, kind = "conditional", tree = "Holy",
@@ -152,7 +151,7 @@ ns.Data.PRIEST = {
 		},
 		{
 			key = "prayerOfMending", name = "Prayer of Mending", maxRank = 1, kind = "utility", tree = "Holy",
-			explain = "Grants Prayer of Mending: a heal that triggers when the target takes damage and then jumps up to 5 times (10 sec cooldown).",
+			explain = "Grants Prayer of Mending: heals when the target takes damage or receives non-periodic healing, then jumps to a party or raid member within 20 yards, up to 5 times; lasts 30 sec after each jump.",
 		},
 		{
 			key = "shadowFocus", name = "Shadow Focus", maxRank = 5, kind = "conditional", tree = "Shadow Magic",
@@ -164,7 +163,7 @@ ns.Data.PRIEST = {
 		},
 		{
 			key = "spiritTap", name = "Spirit Tap", maxRank = 5, kind = "conditional", tree = "Shadow Magic",
-			explain = "20% chance per rank after a kill to double your Spirit for 15 sec, with 50% of mana regeneration continuing while casting.",
+			explain = "20% chance per rank after killing a non-trivial target or when an enemy with your Vampiric Embrace dies to double your Spirit for 15 sec, with 50% of mana regeneration continuing while casting.",
 		},
 		{
 			key = "improvedMindBlast", name = "Improved Mind Blast", maxRank = 5, kind = "utility", tree = "Shadow Magic",
@@ -200,11 +199,11 @@ ns.Data.PRIEST = {
 		},
 		{
 			key = "shadowWeaving", name = "Shadow Weaving", maxRank = 3, kind = "conditional", tree = "Shadow Magic",
-			explain = "Your Shadow damage spells have a 33% chance per rank to increase the Shadow damage the target takes from you by 2%, stacking up to 5 times.",
+			explain = "Your Shadow damage spells have a 33/67/100% chance by rank to increase the Shadow damage the target takes from you by 2% for 15 sec, stacking up to 5 times.",
 		},
 		{
 			key = "silence", name = "Silence", maxRank = 1, kind = "utility", tree = "Shadow Magic",
-			explain = "Grants Silence: silences the target for 5 sec (45 sec cooldown).",
+			explain = "Grants Silence: silences the target for 5 sec and interrupts its spellcasts for 3 sec.",
 		},
 		{
 			key = "devouringContagion", name = "Devouring Contagion", maxRank = 2, kind = "utility", tree = "Shadow Magic",
