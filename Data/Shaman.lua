@@ -1,6 +1,6 @@
 local ADDON, ns = ...
 
--- Build 1.60.1.70338. Source: https://wowforevertalents.com/shaman/
+-- Build 1.60.1.70755. Source: https://wowforevertalents.com/shaman/
 -- Percent values are fractions (0.02 = 2%); flat crit/dodge values are percentage points.
 ns.Data = ns.Data or {}
 
@@ -9,7 +9,7 @@ ns.Data.SHAMAN = {
 	talents = {
 		{
 			key = "earthsGrasp", name = "Earth's Grasp", maxRank = 2, kind = "utility",
-			explain = "Improves your Stoneclaw Totem.",
+			explain = "Increases Stoneclaw Totem health by 25% and Earthbind Totem radius by 10% per rank.",
 		},
 		{
 			key = "thunderingStrikes", name = "Thundering Strikes", maxRank = 5, kind = "stat",
@@ -26,17 +26,16 @@ ns.Data.SHAMAN = {
 		},
 		{
 			key = "guardianTotems", name = "Guardian Totems", maxRank = 2, kind = "utility",
-			explain = "Improves your Stoneskin and Windwall Totems.",
+			explain = "Improves Stoneskin and Windwall damage reduction by 10% and reduces Grounding Totem cooldown by 1 sec per rank.",
 		},
 		{
 			key = "mentalDexterity", name = "Mental Dexterity", maxRank = 3, kind = "stat",
-			effects = { { stat = "ap", op = "fromStat", source = "int", perRank = { 0.33, 0.66, 1.00 } } },
-			explain = "Grants attack power equal to a share of your Intellect (33%/66%/100%).",
-			inferred = { rank = true },
+			effects = { { stat = "ap", op = "fromStat", source = "int", perRank = { 0.50, 1.00, 1.50 } } },
+			explain = "Grants attack power equal to 50%/100%/150% of your Intellect.",
 		},
 		{
 			key = "improvedGhostWolf", name = "Improved Ghost Wolf", maxRank = 2, kind = "utility",
-			explain = "Improves Ghost Wolf form.",
+			explain = "Reduces Ghost Wolf cast time by 1/3 sec and allows its use indoors.",
 		},
 		{
 			key = "improvedLightningShield", name = "Improved Lightning Shield", maxRank = 3, kind = "conditional",
@@ -63,16 +62,16 @@ ns.Data.SHAMAN = {
 		},
 		{
 			key = "flurry", name = "Flurry", maxRank = 5, kind = "conditional",
-			explain = "After a melee critical strike, your next 3 swings are 5% faster per rank.",
+			explain = "After a melee critical strike, your next 3 swings are 6% faster per rank.",
 		},
 		{
 			key = "stormstrike", name = "Stormstrike", maxRank = 1, kind = "conditional",
-			explain = "Your next Lightning Bolt, Chain Lightning or Earth Shock deals 20% more damage for 12 sec.",
+			explain = "Instantly strikes for 150% weapon damage and boosts your next Lightning Bolt, Chain Lightning or Earth Shock against the target by 20% for 12 sec.",
 		},
 		{
 			key = "spiritWeapons", name = "Spirit Weapons", maxRank = 1, kind = "stat",
 			effects = { { stat = "parry", op = "enables" } },
-			explain = "Lets you parry attacks and reduces the threat you generate.",
+			explain = "Lets you parry attacks; reduces attack threat by 30% without Rockbiter Weapon, or increases all threat by 30% with it.",
 		},
 		{
 			key = "mentalQuickness", name = "Mental Quickness", maxRank = 2, kind = "stat",
@@ -84,7 +83,7 @@ ns.Data.SHAMAN = {
 		},
 		{
 			key = "improvedStormstrike", name = "Improved Stormstrike", maxRank = 2, kind = "conditional",
-			explain = "Stormstrike has a 50%/100% chance to grant mana regeneration while casting for 15 sec, and resets its cooldown when you dodge or parry.",
+			explain = "Stormstrike has a 50%/100% chance to grant 50% mana regeneration while casting for 15 sec; dodging or parrying has a 50%/100% chance to reset its cooldown.",
 		},
 		{
 			key = "maelstromWeapon", name = "Maelstrom Weapon", maxRank = 5, kind = "conditional",
@@ -96,7 +95,7 @@ ns.Data.SHAMAN = {
 		},
 		{
 			key = "convection", name = "Convection", maxRank = 5, kind = "utility", tree = "Elemental Combat",
-			explain = "Reduces the mana cost of your shocks, Lightning Bolt, Lava Burst and Chain Lightning by 2% per rank.",
+			explain = "Reduces the mana cost of your shocks, Lightning Bolt and Chain Lightning by 2% per rank.",
 		},
 		{
 			key = "concussion", name = "Concussion", maxRank = 5, kind = "conditional", tree = "Elemental Combat",
@@ -112,11 +111,11 @@ ns.Data.SHAMAN = {
 		},
 		{
 			key = "callOfFlame", name = "Call of Flame", maxRank = 3, kind = "conditional", tree = "Elemental Combat",
-			explain = "Increases the damage of your Fire Totems, Flame Shock, Fire Nova and Lava Burst by 5% per rank.",
+			explain = "Increases Fire Totem, Flame Shock and Fire Nova damage by 5% per rank, and Flame Shock duration by 3 sec per rank.",
 		},
 		{
 			key = "elementalDevastation", name = "Elemental Devastation", maxRank = 3, kind = "conditional", tree = "Elemental Combat",
-			explain = "Your offensive spell crits grant +3% melee crit chance per rank for 10 sec.",
+			explain = "Your direct damage spell crits grant +3% melee crit chance per rank for 10 sec.",
 		},
 		{
 			key = "elementalFocus", name = "Elemental Focus", maxRank = 1, kind = "conditional", tree = "Elemental Combat",
@@ -124,27 +123,27 @@ ns.Data.SHAMAN = {
 		},
 		{
 			key = "elementalAlacrity", name = "Elemental Alacrity", maxRank = 3, kind = "conditional", tree = "Elemental Combat",
-			explain = "Reduces the cast time of Lightning Bolt, Chain Lightning and Lava Burst by 0.17 sec at rank 1 and 0.5 sec at rank 3.",
+			explain = "Reduces the cast time of Lightning Bolt and Chain Lightning by 0.17/0.33/0.5 sec.",
 		},
 		{
-			key = "improvedFireNova", name = "Improved Fire Nova", maxRank = 2, kind = "conditional", tree = "Elemental Combat",
-			explain = "Increases Fire Nova damage by 10% per rank and reduces its cooldown by 2 sec per rank.",
+			key = "trialByFire", name = "Trial by Fire", maxRank = 2, kind = "conditional", tree = "Elemental Combat",
+			explain = "Increases Fire Nova damage by 10%, reduces its cooldown by 2 sec, and increases Magma Totem duration by 10 sec per rank.",
 		},
 		{
 			key = "eyeOfTheStorm", name = "Eye of the Storm", maxRank = 3, kind = "conditional", tree = "Elemental Combat",
-			explain = "Reduces pushback while casting Lightning Bolt, Chain Lightning and Lava Burst by 23% at rank 1 and 70% at rank 3.",
+			explain = "Gives Lightning Bolt and Chain Lightning a 23%/47%/70% chance to avoid pushback from damage.",
 		},
 		{
 			key = "callOfThunder", name = "Call of Thunder", maxRank = 1, kind = "conditional", tree = "Elemental Combat",
-			explain = "Increases the critical strike chance of Lightning Bolt and Chain Lightning (Forever text unavailable).",
+			explain = "Effect text is not in the client yet.",
 		},
 		{
 			key = "elementalReach", name = "Elemental Reach", maxRank = 2, kind = "utility", tree = "Elemental Combat",
-			explain = "Increases the range of Lightning Bolt, Chain Lightning, Fire Nova and Lava Burst by 3 yd per rank, and Flame Shock by 8/15 yd.",
+			explain = "Increases the range of Lightning Bolt, Chain Lightning and Fire Nova by 3 yd per rank.",
 		},
 		{
 			key = "lightningOverload", name = "Lightning Overload", maxRank = 3, kind = "conditional", tree = "Elemental Combat",
-			explain = "Lightning Bolt and Chain Lightning have a 3% chance per rank at rank 1 (10% at rank 3) to cast a free second spell for half damage.",
+			explain = "Lightning Bolt and Chain Lightning have a 10%/20%/30% chance to cast a free second spell for half damage and no threat.",
 		},
 		{
 			key = "earthbound", name = "Earthbound", maxRank = 1, kind = "utility", tree = "Elemental Combat",
@@ -155,8 +154,8 @@ ns.Data.SHAMAN = {
 			explain = "Increases the critical strike damage bonus of Searing and Magma Totems and your Fire, Frost and Nature spells by 20% per rank.",
 		},
 		{
-			key = "lavaBurst", name = "Lava Burst", maxRank = 1, kind = "utility", tree = "Elemental Combat",
-			explain = "Grants Lava Burst: 2.5 sec cast, 10 sec cooldown, 20% more damage if Flame Shock is on the target.",
+			key = "lightningMastery", name = "Lightning Mastery", maxRank = 1, kind = "conditional", tree = "Elemental Combat",
+			explain = "Requires Call of Thunder. Reduces Lightning Bolt cast time by 0.5 sec and removes Chain Lightning's cooldown for 15 sec.",
 		},
 		{
 			key = "improvedHealingWave", name = "Improved Healing Wave", maxRank = 5, kind = "conditional", tree = "Restoration",
@@ -197,7 +196,7 @@ ns.Data.SHAMAN = {
 		},
 		{
 			key = "waterShield", name = "Water Shield", maxRank = 1, kind = "utility", tree = "Restoration",
-			explain = "Grants Water Shield: 3 globes that restore 2% of your maximum mana when you are hit or your heals crit.",
+			explain = "Grants Water Shield: 3 globes that restore 2% of your maximum mana when you are hit or any of your spells crits; only one globe activates every few seconds.",
 		},
 		{
 			key = "tidalMastery", name = "Tidal Mastery", maxRank = 5, kind = "conditional", tree = "Restoration",
@@ -225,7 +224,7 @@ ns.Data.SHAMAN = {
 		},
 		{
 			key = "riptide", name = "Riptide", maxRank = 1, kind = "utility", tree = "Restoration",
-			explain = "Grants Riptide: an instant heal plus a heal over time that boosts your next Chain Heal on the target by 25%.",
+			explain = "Heals a friendly target for 445 over 15 sec and boosts Chain Heal casts directly on that target by 25%.",
 		},
 	},
 }
