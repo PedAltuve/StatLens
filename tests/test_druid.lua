@@ -44,6 +44,18 @@ T.test("druid data spot checks", function()
 	T.eq(byKey.berserk, nil)
 end)
 
+T.test("Rend and Tear follows the 4 November hotfix", function()
+	local _, d = load()
+	for _, t in ipairs(d.talents) do
+		if t.key == "rendAndTear" then
+			T.truthy(t.explain:find("3% per rank", 1, true), "Rend and Tear explain says 3% per rank")
+			T.eq(t.maxRank, 5)
+			return
+		end
+	end
+	T.truthy(false, "rendAndTear present")
+end)
+
 T.test("druid live 70755 roster and ranks", function()
 	local _, d = load()
 	local expected = {

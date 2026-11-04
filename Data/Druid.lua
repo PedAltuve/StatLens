@@ -99,7 +99,7 @@ ns.Data.DRUID = {
 		},
 		{
 			key = "rendAndTear", name = "Rend and Tear", maxRank = 5, kind = "conditional",
-			explain = "Increases your melee damage against bleeding targets by 2% per rank.",
+			explain = "Increases your melee damage against bleeding targets by 3% per rank.",
 		},
 		{
 			key = "lacerate", name = "Lacerate", maxRank = 1, kind = "utility",
