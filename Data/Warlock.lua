@@ -30,11 +30,11 @@ ns.Data.WARLOCK = {
 		},
 		{
 			key = "soulHarvest", name = "Soul Harvest", maxRank = 2, kind = "conditional",
-			explain = "Killing a target afflicted by your Drain Soul increases Mana regeneration by 50% per rank for 10 sec and lets 50% per rank continue while casting.",
+			explain = "Killing a non-trivial target afflicted by your Drain Soul increases Mana regeneration by 50% per rank for 10 sec and lets 50% per rank continue while casting.",
 		},
 		{
 			key = "improvedDrains", name = "Improved Drains", maxRank = 3, kind = "conditional",
-			explain = "Increases health drained or damage done by Drain Life, Drain Soul and Wrack by 7% at rank 1, up to 20% at rank 3.",
+			explain = "Increases health drained, damage done or Mana drained by Drain Life, Drain Soul and Drain Mana by 7% at rank 1, up to 20% at rank 3.",
 		},
 		{
 			key = "improvedBaneOfAgony", name = "Improved Bane of Agony", maxRank = 2, kind = "conditional",
@@ -78,7 +78,7 @@ ns.Data.WARLOCK = {
 		},
 		{
 			key = "wrack", name = "Wrack", maxRank = 1, kind = "conditional",
-			explain = "Grants Wrack: Shadow damage every sec for 6 sec, and the target takes 10% more damage from your other Shadow damage over time effects.",
+			explain = "Grants Wrack: 86 Shadow damage every sec for 6 sec, and the target takes 10% more damage from your other Shadow damage over time effects.",
 		},
 		{
 			key = "improvedHealthFunnel", name = "Improved Health Funnel", maxRank = 2, kind = "conditional", tree = "Demonology",
@@ -119,7 +119,7 @@ ns.Data.WARLOCK = {
 		},
 		{
 			key = "demonicSacrifice", name = "Demonic Sacrifice", maxRank = 1, kind = "conditional", tree = "Demonology",
-			explain = "Sacrifices your demon for a 2 hr effect: Imp +15% Shadow damage, Voidwalker 2% Mana every 4 sec, Succubus/Incubus +15% Fire damage, Felhunter 3% Health every 4 sec.",
+			explain = "Sacrifices your demon for a 2 hr effect: Imp +15% Shadow damage, Voidwalker 2% of total Mana every 4 sec, Succubus/Incubus +15% Fire damage, Felhunter 3% of total Health every 4 sec.",
 		},
 		{
 			key = "masterSummoner", name = "Master Summoner", maxRank = 2, kind = "utility", tree = "Demonology",
@@ -157,7 +157,7 @@ ns.Data.WARLOCK = {
 		},
 		{
 			key = "demonicPact", name = "Demonic Pact", maxRank = 1, kind = "conditional", tree = "Demonology",
-			explain = "Your Demonic Sacrifice effect is no longer cancelled by summoning a different demon.",
+			explain = "Your Demonic Sacrifice effect is no longer cancelled by summoning a different demon; resummoning the sacrificed pet still cancels it.",
 		},
 		{
 			key = "destructiveReach", name = "Destructive Reach", maxRank = 2, kind = "utility", tree = "Destruction",
@@ -217,7 +217,7 @@ ns.Data.WARLOCK = {
 		},
 		{
 			key = "shadowAndFlame", name = "Shadow and Flame", maxRank = 5, kind = "conditional", tree = "Destruction",
-			explain = "Conflagrate raises your Shadow damage and Shadowburn your Fire damage by 2% per rank for 20 sec; each has a 20% chance per rank to keep Immolate or refund a Soul Shard.",
+			explain = "Conflagrate raises your Shadow damage and Shadowburn your Fire damage by 4% per rank for 20 sec; each has a 20% chance per rank to keep Immolate or refund a Soul Shard.",
 		},
 		{
 			key = "incinerate", name = "Incinerate", maxRank = 1, kind = "utility", tree = "Destruction",

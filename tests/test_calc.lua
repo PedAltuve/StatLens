@@ -19,21 +19,35 @@ local function part(b, stat, key)
 	for _, p in ipairs(b.stats[stat].parts) do if p.key == key then return p end end
 end
 
+T.test("Mental Dexterity build 70755 scales AP at every rank", function()
+	local ns, d = load()
+	for rank = 0, 3 do
+		local b = ns.Calc.Breakdown(vals({ int = 200 }), { mentalDexterity = rank }, d)
+		T.eq(b.stats.ap and b.stats.ap.talentTotal or 0, rank * 100, "MD AP rank " .. rank)
+		local nextPoint = ns.Calc.NextPoint(vals({ int = 200 }), { mentalDexterity = rank }, d, "mentalDexterity")
+		if rank < 3 then
+			T.eq(nextPoint.deltas.ap, 100, "MD next point rank " .. rank)
+		else
+			T.eq(nextPoint, nil, "MD maxed")
+		end
+	end
+end)
+
 T.test("pct inversion and fromStat", function()
 	local ns, d = load()
 	local b = ns.Calc.Breakdown(vals(), { ancestralKnowledge = 5, mentalDexterity = 3, mentalQuickness = 2 }, d)
 	T.near(part(b, "int", "ancestralKnowledge").amount, 341 - 341 / 1.1, 1e-9, "AK amount")
 	T.near(part(b, "int", "ancestralKnowledge").amount, 31.0, 0.05)
-	T.eq(part(b, "ap", "mentalDexterity").amount, 341, "MD 100% of int")
+	T.eq(part(b, "ap", "mentalDexterity").amount, 511.5, "MD 150% of int")
 	T.near(part(b, "sp", "mentalQuickness").amount, 102.3, 1e-9, "MQ 30%")
 	local ak = b.talents.ancestralKnowledge
 	T.eq(ak.rank, 5)
 	T.near(ak.contributions.int, 31.0, 0.05)
 	T.eq(#ak.chained.ap, 1); T.eq(ak.chained.ap[1].via, "mentalDexterity")
-	T.near(ak.chained.ap[1].amount, 31.0, 0.05, "AK chained ap")
+	T.near(ak.chained.ap[1].amount, 46.5, 0.05, "AK chained ap")
 	T.near(ak.chained.sp[1].amount, 9.3, 0.05, "AK chained sp")
 	T.eq(ak.chained.sp[1].via, "mentalQuickness")
-	T.near(b.stats.ap.talentTotal, 341, 1e-9, "chained not double counted")
+	T.near(b.stats.ap.talentTotal, 511.5, 1e-9, "chained not double counted")
 	T.near(b.stats.int.talentTotal, 31.0, 0.05)
 	T.eq(b.stats.int.total, 341)
 end)
@@ -68,12 +82,12 @@ T.test("NextPoint", function()
 	T.eq(n.rank, 2); T.eq(n.nextRank, 3)
 	local base = 341 / 1.04
 	T.near(n.deltas.int, base * 0.02, 1e-9, "AK delta")
-	T.near(n.deltas.ap, base * 0.02 * 1.0, 1e-9, "chained into ap delta")
+	T.near(n.deltas.ap, base * 0.02 * 1.5, 1e-9, "chained into ap delta")
 	T.eq(n.chained.ap[1].via, "mentalDexterity")
-	T.near(n.chained.ap[1].amount, base * 0.02, 1e-9)
+	T.near(n.chained.ap[1].amount, base * 0.02 * 1.5, 1e-9)
 
 	local m = ns.Calc.NextPoint(v, { mentalDexterity = 1 }, d, "mentalDexterity")
-	T.near(m.deltas.ap, 341 * 0.33, 1e-9, "MD 0.33->0.66")
+	T.near(m.deltas.ap, 341 * 0.50, 1e-9, "MD 0.50->1.00")
 
 	local f = ns.Calc.NextPoint(v, { anticipation = 1 }, d, "anticipation")
 	T.eq(f.deltas.dodge, 2)
