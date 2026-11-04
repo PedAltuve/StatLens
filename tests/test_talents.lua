@@ -182,23 +182,31 @@ end)
 
 T.test("Read matches Elemental and Restoration talents by name", function()
 	local ns = load()
-	local spells = { [1] = "Concussion", [2] = "Riptide", [3] = "Tidal Focus" }
+	local spells = { [1] = "Concussion", [2] = "Riptide", [3] = "Tidal Focus",
+		[4] = "Trial by Fire", [5] = "Lightning Mastery", [6] = "Call of Thunder" }
 	local nodes = {
 		[1] = { ID = 1, entryIDs = { 1 }, currentRank = 4 },
 		[2] = { ID = 2, entryIDs = { 2 }, currentRank = 1 },
 		[3] = { ID = 3, entryIDs = { 3 }, currentRank = 5 },
+		[4] = { ID = 4, entryIDs = { 4 }, currentRank = 2 },
+		[5] = { ID = 5, entryIDs = { 5 }, currentRank = 1 },
+		[6] = { ID = 6, entryIDs = { 6 }, currentRank = 1 },
 	}
 	_G.C_ClassTalents = { GetActiveConfigID = function() return 9 end }
 	_G.C_Spell = { GetSpellName = function(id) return spells[id] end }
 	_G.C_Traits = {
 		GetConfigInfo = function() return { treeIDs = { 7 } } end,
-		GetTreeNodes = function() return { 1, 2, 3 } end,
+		GetTreeNodes = function() return { 1, 2, 3, 4, 5, 6 } end,
 		GetNodeInfo = function(_, id) return nodes[id] end,
 		GetEntryInfo = function(_, e) return { definitionID = e } end,
 		GetDefinitionInfo = function(d) return { spellID = d } end,
 	}
 	local r = ns.Talents.Read()
 	T.eq(r.ranks.concussion, 4); T.eq(r.ranks.riptide, 1); T.eq(r.ranks.tidalFocus, 5)
+	T.eq(r.ranks.trialByFire, 2); T.eq(r.ranks.lightningMastery, 1); T.eq(r.ranks.callOfThunder, 1)
+	T.eq(ns.Talents.ByName("Improved Fire Nova"), nil)
+	T.eq(ns.Talents.ByName("Lava Burst"), nil)
+	T.eq(ns.Talents.ByName("Elemental Mastery"), nil)
 	T.eq(#r.unmatched, 0, "nothing unmatched")
 	T.eq(ns.Talents.ByName("Riptide").tree, "Restoration")
 	T.eq(ns.Talents.ByName("Concussion").tree, "Elemental Combat")
