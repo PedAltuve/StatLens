@@ -43,8 +43,10 @@ end)
 
 T.test("Lightning Reflexes inverts agility", function()
 	local ns, d = load()
-	local b = ns.Calc.Breakdown({ agi = 110 }, { lightningReflexes = 5 }, d)
-	T.near(b.talents.lightningReflexes.contributions.agi, 10, 1e-9)
+	local b = ns.Calc.Breakdown({ agi = 115 }, { lightningReflexes = 5 }, d)
+	T.near(b.talents.lightningReflexes.contributions.agi, 15, 1e-9)
+	b = ns.Calc.Breakdown({ agi = 103 }, { lightningReflexes = 1 }, d)
+	T.near(b.talents.lightningReflexes.contributions.agi, 3, 1e-9)
 end)
 
 T.test("Survivalist inverts health", function()
