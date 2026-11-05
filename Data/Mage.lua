@@ -160,7 +160,7 @@ ns.Data.MAGE = {
 		},
 		{
 			key = "improvedFrostbolt", name = "Improved Frostbolt", maxRank = 5, kind = "utility", tree = "Frost",
-			explain = "Reduces the cast time of Frostbolt and Frost Blast by 0.1 sec per rank.",
+			explain = "Reduces the cast time of Frostbolt by 0.1 sec per rank.",
 		},
 		{
 			key = "precision", name = "Precision", maxRank = 3, kind = "stat", tree = "Frost",
@@ -197,7 +197,7 @@ ns.Data.MAGE = {
 		},
 		{
 			key = "arcticReach", name = "Arctic Reach", maxRank = 2, kind = "utility", tree = "Frost",
-			explain = "Increases the range of Frostbolt, Frost Blast, Ice Lance and Blizzard and the radius of Frost Nova and Cone of Cold by 10% per rank.",
+			explain = "Increases the range of Frostbolt, Ice Lance and Blizzard and the radius of Frost Nova and Cone of Cold by 10% per rank.",
 		},
 		{
 			key = "iceBlock", name = "Ice Block", maxRank = 1, kind = "utility", tree = "Frost",
@@ -221,7 +221,7 @@ ns.Data.MAGE = {
 		},
 		{
 			key = "wintersChill", name = "Winter's Chill", maxRank = 5, kind = "conditional", tree = "Frost",
-			explain = "Frostbolt, Frost Blast and Fingers of Frost empowered Ice Lance have a 20% chance per rank to apply Winter's Chill: your next Cone of Cold deals 20% increased damage to the target and gains an additional 7% of your spell damage, stacking up to 5 times.",
+			explain = "Frostbolt and Fingers of Frost empowered Ice Lance have a 20% chance per rank to apply Winter's Chill: your next Cone of Cold deals 20% increased damage to the target and gains an additional 7% of your spell damage, stacking up to 5 times.",
 		},
 		{
 			key = "iceBarrier", name = "Ice Barrier", maxRank = 1, kind = "utility", tree = "Frost",
