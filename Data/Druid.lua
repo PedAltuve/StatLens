@@ -1,6 +1,6 @@
 local ADDON, ns = ...
 
--- Build 1.60.1.70338. Source: https://wowforevertalents.com/druid/
+-- Build 1.60.1.70755. Source: https://wowforevertalents.com/druid/
 -- Percent values are fractions (0.02 = 2%); flat crit/dodge values are percentage points.
 -- `forms` gates an effect to those shapeshift forms (see ns.Stats.FORMS).
 ns.Data = ns.Data or {}
@@ -13,13 +13,13 @@ ns.Data.DRUID = {
 			explain = "Reduces the Rage or Energy cost of Maul, Primal Bite, Swipe, Claw and Rake by 1 per rank.",
 		},
 		{
-			key = "heartOfTheWild", name = "Heart of the Wild", maxRank = 5, kind = "stat",
+			key = "heartOfTheWild", name = "Heart of the Wild", maxRank = 5, kind = "stat", tree = "Restoration",
 			effects = {
 				{ stat = "int", op = "pct", perRank = { 0.02, 0.04, 0.06, 0.08, 0.10 } },
 				{ stat = "stam", op = "pct", forms = { "bear" }, perRank = { 0.04, 0.08, 0.12, 0.16, 0.20 } },
 				{ stat = "str", op = "pct", forms = { "cat" }, perRank = { 0.02, 0.04, 0.06, 0.08, 0.10 } },
 			},
-			explain = "Increases Intellect by 2% per rank, Stamina by 4% per rank in Bear Form and Strength by 2% per rank in Cat Form.",
+			explain = "Increases Intellect by 2% per rank, Stamina by 4% per rank in Bear or Dire Bear Form and Strength by 2% per rank in Cat Form.",
 		},
 		{
 			key = "feralSwiftness", name = "Feral Swiftness", maxRank = 2, kind = "stat",
@@ -28,7 +28,7 @@ ns.Data.DRUID = {
 		},
 		{
 			key = "feralInstinct", name = "Feral Instinct", maxRank = 3, kind = "conditional",
-			explain = "Increases the damage of Swipe by 10% per rank and improves your Prowl detection.",
+			explain = "Increases the damage of Swipe by 10% per rank and makes you harder to detect while Prowling as if 1 level higher per rank.",
 		},
 		{
 			key = "brutalImpact", name = "Brutal Impact", maxRank = 2, kind = "utility",
@@ -39,8 +39,7 @@ ns.Data.DRUID = {
 			effects = {
 				{ stat = "armor", op = "perLevel", forms = { "bear", "cat", "moonkin" }, perRank = { 1, 2, 3 } },
 			},
-			explain = "Adds base armor per character level in Bear, Cat and Moonkin forms; the defense skill bonus and form armor multipliers are not included.",
-			inferred = { rank = true },
+			explain = "Adds 1 base Armor per level per rank in Bear, Dire Bear, Cat or Moonkin Form, plus 0.67/1.33/2 base Armor per defense skill above five times your level. Form multipliers can increase this armor; only the per-level base armor is modeled here.",
 		},
 		{
 			key = "shreddingAttacks", name = "Shredding Attacks", maxRank = 3, kind = "utility",
@@ -57,11 +56,11 @@ ns.Data.DRUID = {
 		{
 			key = "sharpenedClaws", name = "Sharpened Claws", maxRank = 2, kind = "stat",
 			effects = { { stat = "meleeCrit", op = "flat", forms = { "bear", "cat" }, perRank = { 3, 6 } } },
-			explain = "Increases your melee critical strike chance by 3% per rank while in Bear or Cat Form.",
+			explain = "Increases your melee critical strike chance by 3% per rank while in Bear, Dire Bear or Cat Form.",
 		},
 		{
 			key = "shiftingPower", name = "Shifting Power", maxRank = 1, kind = "utility",
-			explain = "Improves shapeshifting.",
+			explain = "Instantly converts 55% of Base Mana into 40 Energy; effects that reduce shapeshifting costs also reduce this cost.",
 		},
 		{
 			key = "primalBite", name = "Primal Bite", maxRank = 1, kind = "utility",
@@ -70,15 +69,15 @@ ns.Data.DRUID = {
 		{
 			key = "predatoryStrikes", name = "Predatory Strikes", maxRank = 3, kind = "stat",
 			effects = { { stat = "ap", op = "perLevel", forms = { "cat", "bear" }, perRank = { 0.5, 1.0, 1.5 } } },
-			explain = "Increases your attack power by 0.5 per character level per rank while in Cat or Bear Form.",
+			explain = "Increases your attack power by 0.5 per character level per rank while in Cat, Bear or Dire Bear Form.",
 		},
 		{
 			key = "bloodFrenzy", name = "Blood Frenzy", maxRank = 2, kind = "conditional",
-			explain = "Improves your attacks against bleeding targets.",
+			explain = "Critical strikes in Bear or Dire Bear Form have a 50% chance per rank to grant 5 extra Rage; non-periodic Cat ability crits that generate Combo Points have the same chance to add an extra Combo Point.",
 		},
 		{
-			key = "improvedShiftingPower", name = "Improved Shifting Power", maxRank = 2, kind = "utility",
-			explain = "Further improves shapeshifting.",
+			key = "predatoryDiscipline", name = "Predatory Discipline", maxRank = 1, kind = "utility",
+			explain = "Ferocious Bite no longer converts extra Energy into damage, but still deals extra damage based on excess Energy.",
 		},
 		{
 			key = "leaderOfThePack", name = "Leader of the Pack", maxRank = 1, kind = "stat",
@@ -86,12 +85,12 @@ ns.Data.DRUID = {
 				{ stat = "meleeCrit", op = "flat", forms = { "cat", "bear" }, perRank = { 3 } },
 				{ stat = "spellCrit", op = "flat", forms = { "cat", "bear" }, perRank = { 3 } },
 			},
-			explain = "Increases the critical strike chance of you and your party by 3% while in Cat or Bear Form.",
+			explain = "Increases the critical strike chance of party or raid members within 45 yards by 3% while in Cat, Bear or Dire Bear Form.",
 		},
 		{
 			key = "naturalInstinct", name = "Natural Instinct", maxRank = 2, kind = "stat",
 			effects = { { stat = "heal", op = "fromStat", source = "int", perRank = { 0.12, 0.25 } } },
-			explain = "Grants healing power equal to 12%/25% of your Intellect and increases melee critical strike damage by 10%/20%.",
+			explain = "Increases spell healing by 12%/25% of your Intellect and the critical strike damage bonus of melee abilities by 10%/20%.",
 		},
 		{
 			key = "naturalReaction", name = "Natural Reaction", maxRank = 5, kind = "stat",
@@ -100,11 +99,11 @@ ns.Data.DRUID = {
 		},
 		{
 			key = "rendAndTear", name = "Rend and Tear", maxRank = 5, kind = "conditional",
-			explain = "Increases your melee damage against bleeding targets by 2% per rank.",
+			explain = "Increases your melee damage against bleeding targets by 3% per rank.",
 		},
 		{
-			key = "berserk", name = "Berserk", maxRank = 1, kind = "conditional",
-			explain = "Grants the Berserk ability.",
+			key = "lacerate", name = "Lacerate", maxRank = 1, kind = "utility",
+			explain = "Grants Lacerate: causes a high-threat bleed over 15 sec plus weapon damage per existing application, stacking up to 5 times.",
 		},
 		{
 			key = "naturesMajesty", name = "Nature's Majesty", maxRank = 2, kind = "stat", tree = "Balance",
@@ -120,7 +119,7 @@ ns.Data.DRUID = {
 		},
 		{
 			key = "genesis", name = "Genesis", maxRank = 5, kind = "conditional", tree = "Balance",
-			explain = "Increases the periodic damage and healing of your spells and abilities by 1% per rank.",
+			explain = "Increases the periodic damage and healing of your spells and abilities by 2% per rank.",
 		},
 		{
 			key = "moonglow", name = "Moonglow", maxRank = 3, kind = "utility", tree = "Balance",
@@ -180,19 +179,19 @@ ns.Data.DRUID = {
 				{ stat = "meleeCrit", op = "flat", forms = { "moonkin" }, perRank = { 3 } },
 				{ stat = "spellCrit", op = "flat", forms = { "moonkin" }, perRank = { 3 } },
 			},
-			explain = "In Moonkin Form, you and your party gain 3% critical strike chance (exclusive with Leader of the Pack); also +360% armor from items, better Omen of Clarity odds, and no healing spells.",
+			explain = "In Moonkin Form, party or raid members within 45 yards gain 3% critical strike chance; also +360% armor from items, +100% Omen of Clarity trigger chance, Polymorph protection, and no healing spells. Shapeshifting frees you from Polymorph and movement impairing effects.",
 		},
 		{
 			key = "naturesFocus", name = "Nature's Focus", maxRank = 5, kind = "utility", tree = "Restoration",
 			explain = "Gives a 14% chance per rank to avoid interruption by damage while casting Arcane and Nature spells.",
 		},
 		{
-			key = "furor", name = "Furor", maxRank = 5, kind = "utility", tree = "Restoration",
-			explain = "Improves Rage gained when entering Bear Form (20% chance per rank for 10 Rage) and Energy restored when entering Cat Form.",
+			key = "furor", name = "Furor", maxRank = 5, kind = "utility",
+			explain = "Gives a 20% chance per rank to gain 10 Rage on entering Bear or Dire Bear Form. Entering Cat Form restores 20% per rank of your previous Cat Energy plus 2 Energy per rank per second spent outside Bear or Dire Bear Form, capped at 20 Energy per rank.",
 		},
 		{
 			key = "naturalist", name = "Naturalist", maxRank = 5, kind = "conditional", tree = "Restoration",
-			explain = "Reduces the cast time of Healing Touch by 0.1 sec per rank and increases all damage you deal by 1% per rank.",
+			explain = "Reduces the cast time of Healing Touch and Wild Growth by 0.1 sec per rank and increases all damage you deal by 2% per rank.",
 		},
 		{
 			key = "subtlety", name = "Subtlety", maxRank = 3, kind = "utility", tree = "Restoration",
@@ -211,8 +210,8 @@ ns.Data.DRUID = {
 			explain = "Increases the effect of all your healing spells by 2% per rank.",
 		},
 		{
-			key = "giftOfTheEarthmother", name = "Gift of the Earthmother", maxRank = 1, kind = "utility", tree = "Restoration",
-			explain = "Reduces the global cooldown of Rejuvenation, Swiftmend and Wild Growth by 0.5 sec.",
+			key = "bloom", name = "Bloom", maxRank = 1, kind = "conditional", tree = "Restoration",
+			explain = "When Rejuvenation or Regrowth expires naturally, heals the target for 100% of your Spirit; if dispelled, heals for 50% instead.",
 		},
 		{
 			key = "tranquilSpirit", name = "Tranquil Spirit", maxRank = 5, kind = "conditional", tree = "Restoration",
@@ -224,11 +223,11 @@ ns.Data.DRUID = {
 		},
 		{
 			key = "swiftmend", name = "Swiftmend", maxRank = 1, kind = "utility", tree = "Restoration",
-			explain = "Grants Swiftmend: instantly heals a target with Rejuvenation or Regrowth (15 sec cooldown).",
+			explain = "Grants Swiftmend: consumes your active Rejuvenation or Regrowth to instantly heal for its full periodic duration.",
 		},
 		{
 			key = "naturesSwiftness", name = "Nature's Swiftness", maxRank = 1, kind = "utility", tree = "Restoration",
-			explain = "Grants Nature's Swiftness: your next Nature spell becomes instant (3 min cooldown).",
+			explain = "Grants Nature's Swiftness: your next Nature spell becomes instant.",
 		},
 		{
 			key = "livingSpirit", name = "Living Spirit", maxRank = 3, kind = "stat", tree = "Restoration",
@@ -245,7 +244,7 @@ ns.Data.DRUID = {
 		},
 		{
 			key = "wildGrowth", name = "Wild Growth", maxRank = 1, kind = "utility", tree = "Restoration",
-			explain = "Grants Wild Growth: heals the target and their party over 7 sec (6 sec cooldown).",
+			explain = "Grants Wild Growth: heals the target and party members within 43.5 yards over 7 sec, healing quickly at first and slowing over time.",
 		},
 	},
 }
