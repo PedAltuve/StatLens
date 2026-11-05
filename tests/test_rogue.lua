@@ -91,7 +91,7 @@ T.test("Updated Rogue tooltips describe live ability values without sheet effect
 		camouflage = { "utility", "5% per rank", "2 sec per rank" },
 		opportunity = { "conditional", "4% per rank" },
 		dualWieldSpecialization = { "conditional", "25% per rank" },
-		flawlessExecution = { "utility", "15" },
+		flawlessExecution = { "utility", "Energy cost of Eviscerate by 15." },
 		aggression = { "conditional", "Sinister Strike and Eviscerate", "5% per rank" },
 		mutilate = { "conditional", "90% weapon damage plus 39.6", "each weapon", "20%", "2 Combo Points" },
 		venom = { "conditional", "Shank", "30%", "20%", "6 sec" },
