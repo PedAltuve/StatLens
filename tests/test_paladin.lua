@@ -63,8 +63,17 @@ local live = {
 	},
 }
 
-for tree, roster in pairs(live) do
-	for key, expected in pairs(roster) do
+local function sortedKeys(t)
+	local keys = {}
+	for k in pairs(t) do keys[#keys + 1] = k end
+	table.sort(keys)
+	return keys
+end
+
+for _, tree in ipairs(sortedKeys(live)) do
+	local roster = live[tree]
+	for _, key in ipairs(sortedKeys(roster)) do
+		local expected = roster[key]
 		local tree, key, expected = tree, key, expected
 		T.test("Paladin live roster: " .. expected[1], function()
 			local _, d = load()

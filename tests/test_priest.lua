@@ -29,7 +29,8 @@ for rank, percent in ipairs({ 1, 3, 5, 6, 8 }) do
 		local all = table.concat(texts, "\n")
 		T.truthy(all:find(("Spiritual Guidance %d/5: +%d (%d%% of Spirit)"):format(rank, percent * 2, percent), 1, true), all)
 		T.truthy(all:find(("Spiritual Guidance %d/5: +%d (%d%% of Spirit)"):format(rank, rank * 10, rank * 5), 1, true), all)
-		T.eq(all:find("inferred", 1, true), nil)
+		T.eq(entry(d, "spiritualGuidance").inferred, nil)
+		T.eq(all:find("inferred", 1, true), nil, "no talent in the panel is marked inferred")
 	end)
 end
 
@@ -58,7 +59,12 @@ T.test("Holy Binding replaces Binding Heal with conditional self-healing", funct
 	local b = ns.Calc.Breakdown({ heal = 400 }, ranks, d)
 	T.eq(b.talents.holyBinding, nil)
 	local lines = ns.Format.Lines(b, ranks, d)
-	T.eq(lines[2].text, "Holy Binding 1/1: " .. hb.explain)
+	local found = {}
+	for _, l in ipairs(lines) do
+		if l.text:find("Holy Binding", 1, true) then found[#found + 1] = l.text end
+	end
+	T.eq(#found, 1, "exactly one Holy Binding line")
+	T.eq(found[1], "Holy Binding 1/1: " .. hb.explain)
 end)
 
 T.test("Priest explanations match live triggers and rank chances", function()

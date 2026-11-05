@@ -117,6 +117,10 @@ T.test("Precision adds generic spell hit at every rank, not crit or melee hit", 
 			T.eq(talent.contributions.meleeHit, nil)
 			T.eq(talent.contributions.spellCrit, nil)
 		end
+		local got = texts(ns, d, { spellHit = 10, meleeHit = 5, spellCrit = 8 }, { precision = rank })
+		T.eq(got[1], ("Spell Hit 10.0%% (talents +%d.0%%)"):format(2 * rank))
+		T.eq(got[2], ("Precision %d/3: +%d.0%%"):format(rank, 2 * rank))
+		T.eq(#got, 2)
 	end
 	local b = ns.Calc.Breakdown({ spellHit = 10 }, { precision = 0 }, d)
 	T.eq(b.talents.precision, nil)
@@ -179,6 +183,7 @@ end)
 
 T.test("no explanation names Frost Blast after the 4 November hotfix", function()
 	local _, d = load()
+	T.eq(#d.talents, 53)
 	for _, t in ipairs(d.talents) do
 		T.eq(t.explain:find("Frost Blast", 1, true), nil, t.key .. " explain names Frost Blast")
 	end
