@@ -176,3 +176,10 @@ T.test("Magic Absorption is explained, not measured", function()
 	local b = ns.Calc.Breakdown({ int = 100 }, { magicAbsorption = 2 }, d)
 	T.eq(b.talents.magicAbsorption, nil)
 end)
+
+T.test("no explanation names Frost Blast after the 4 November hotfix", function()
+	local _, d = load()
+	for _, t in ipairs(d.talents) do
+		T.eq(t.explain:find("Frost Blast", 1, true), nil, t.key .. " explain names Frost Blast")
+	end
+end)
