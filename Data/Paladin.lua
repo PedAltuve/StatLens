@@ -1,6 +1,6 @@
 local ADDON, ns = ...
 
--- Source: Forever talent tooltips (see odd/sources/paladin-trees.txt).
+-- Source: Forever build 1.60.1.70755 live tooltips (odd/sources/paladin-trees-70755.txt).
 -- Percent values are fractions; flat hit/crit/dodge/parry/block values are percentage points.
 -- School-only hit talents are conditional: the sheet shows generic spell hit, not per-school values.
 ns.Data = ns.Data or {}
@@ -14,7 +14,7 @@ ns.Data.PALADIN = {
 			explain = "Increases your Strength by 2% per rank.",
 		},
 		{
-			key = "divineIntellect", name = "Divine Intellect", maxRank = 5, kind = "stat",
+			key = "divineIntellect", name = "Divine Intellect", maxRank = 5, kind = "stat", tree = "Protection",
 			effects = { { stat = "int", op = "pct", perRank = { 0.02, 0.04, 0.06, 0.08, 0.10 } } },
 			explain = "Increases your total Intellect by 2% per rank.",
 		},
@@ -23,24 +23,24 @@ ns.Data.PALADIN = {
 			explain = "Increases the healing of Holy Light, Flash of Light and Holy Shock by 4% per rank.",
 		},
 		{
-			key = "spiritualFocus", name = "Spiritual Focus", maxRank = 2, kind = "conditional",
-			explain = "Gives Flash of Light, Holy Light and Light's Vigil a 35% chance per rank to lose no casting time when you take damage.",
+			key = "spiritualFocus", name = "Spiritual Focus", maxRank = 5, kind = "conditional",
+			explain = "Gives Flash of Light, Holy Light and Light's Vigil a 14% chance per rank to lose no casting time when you take damage.",
 		},
 		{
-			key = "improvedSeals", name = "Improved Seals", maxRank = 3, kind = "conditional",
-			explain = "Increases the damage of your Seals and Judgements by 5% per rank.",
+			key = "improvedSeals", name = "Improved Seals", maxRank = 5, kind = "conditional",
+			explain = "Increases the damage of your Seals and Judgements by 3% per rank.",
 		},
 		{
-			key = "unyieldingFaith", name = "Unyielding Faith", maxRank = 2, kind = "utility",
+			key = "unyieldingFaith", name = "Unyielding Faith", maxRank = 2, kind = "utility", tree = "Retribution",
 			explain = "Reduces the duration of Fear and Disorient effects on you by 15% per rank.",
 		},
 		{
-			key = "voiceOfTruth", name = "Voice of Truth", maxRank = 1, kind = "utility",
-			explain = "Grants immunity to Silence and Interrupt effects for 6 sec (3 min cooldown).",
+			key = "oathOfLight", name = "Oath of Light", maxRank = 1, kind = "utility",
+			explain = "Protects one ally for 5 min, increasing Holy Light healing on them by up to 400, Flash of Light by up to 115 and Holy Shock by up to 230. Only one Oath may be active.",
 		},
 		{
-			key = "reverence", name = "Reverence", maxRank = 3, kind = "conditional",
-			explain = "Allows 10% per rank of your mana regeneration to continue while casting.",
+			key = "reverence", name = "Reverence", maxRank = 2, kind = "conditional",
+			explain = "Allows 15% per rank of your mana regeneration to continue while casting.",
 		},
 		{
 			key = "purifyingPower", name = "Purifying Power", maxRank = 2, kind = "utility",
@@ -48,7 +48,7 @@ ns.Data.PALADIN = {
 		},
 		{
 			key = "infusionOfLight", name = "Infusion of Light", maxRank = 2, kind = "conditional",
-			explain = "Holy Shock and Flash of Light crits reduce the cast time of your next Holy Light by 0.5 sec per rank.",
+			explain = "Holy Shock and Flash of Light crits reduce the cast time of your next Holy Light within 15 sec by 0.5 sec per rank.",
 		},
 		{
 			key = "illumination", name = "Illumination", maxRank = 5, kind = "conditional",
@@ -59,8 +59,8 @@ ns.Data.PALADIN = {
 			explain = "Your next Flash of Light, Holy Light or Holy Shock is a guaranteed critical effect (2 min cooldown).",
 		},
 		{
-			key = "divinePrecision", name = "Divine Precision", maxRank = 3, kind = "conditional",
-			explain = "Improves your chance to hit with Holy spells by 6% per rank (Holy spells only, so it is not shown as spell hit).",
+			key = "divinePrecision", name = "Divine Precision", maxRank = 2, kind = "conditional",
+			explain = "Improves your chance to hit with Holy spells by 4% per rank and reduces Silence duration by 10% per rank. Holy-only hit is not shown as generic spell hit.",
 		},
 		{
 			key = "holyShock", name = "Holy Shock", maxRank = 1, kind = "utility",
@@ -71,13 +71,16 @@ ns.Data.PALADIN = {
 			explain = "Your Holy spells deal 5% more damage per rank to the first 4 enemies that enter your Consecration.",
 		},
 		{
-			key = "holyPower", name = "Holy Power", maxRank = 5, kind = "stat",
-			effects = { { stat = "spellCrit", op = "flat", perRank = { 1, 2, 3, 4, 5 } } },
-			explain = "Increases the critical strike chance of your spells by 1% per rank; Holy Shock and Holy Strike get +3% per rank instead.",
+			key = "holyPower", name = "Holy Power", maxRank = 5, kind = "conditional",
+			explain = "Increases the critical strike healing bonus of your Holy spells by 10% per rank.",
+		},
+		{
+			key = "boundlessLight", name = "Boundless Light", maxRank = 2, kind = "conditional",
+			explain = "Increases Holy Shock critical strike chance by 15% per rank when healing allies not affected by your Oath of Light.",
 		},
 		{
 			key = "lightsVigil", name = "Light's Vigil", maxRank = 1, kind = "utility",
-			explain = "Grants Light's Vigil: your next Holy Shock on the target has no cooldown and hits enemies or heals the target's party.",
+			explain = "Applies Light's Vigil to a friendly target for 30 sec. Your next Holy Shock on them has no cooldown and heals them and their party for 325 to 344. Only one Vigil per Paladin may be active in each party.",
 		},
 		{
 			key = "toughness", name = "Toughness", maxRank = 5, kind = "stat", tree = "Protection",
@@ -87,7 +90,7 @@ ns.Data.PALADIN = {
 		},
 		{
 			key = "redoubt", name = "Redoubt", maxRank = 5, kind = "conditional", tree = "Protection",
-			explain = "Melee hits against you have a 10% chance to increase your block chance by 4% per rank for 10 sec or 5 blocks.",
+			explain = "Damaging melee attacks against you have a 10% chance to increase your block chance by 6% per rank for 10 sec or 5 blocks.",
 		},
 		{
 			key = "precision", name = "Precision", maxRank = 3, kind = "stat", tree = "Protection",
@@ -113,29 +116,28 @@ ns.Data.PALADIN = {
 			inferred = { rank = true },
 		},
 		{
-			key = "improvedSealOfFury", name = "Improved Seal of Fury", maxRank = 1, kind = "conditional", tree = "Protection",
-			explain = "When Seal of Fury's shield is fully absorbed, restores 60 mana, more against higher-level attackers.",
+			key = "stoicism", name = "Stoicism", maxRank = 2, kind = "utility", tree = "Protection",
+			explain = "Reduces the duration of Stun and Charm effects on you by 10% per rank.",
 		},
 		{
 			key = "improvedRighteousFury", name = "Improved Righteous Fury", maxRank = 3, kind = "conditional", tree = "Protection",
-			explain = "While Righteous Fury is active, all damage taken is reduced by 2% per rank.",
+			explain = "While Righteous Fury is active, all damage taken is reduced by 3% per rank.",
 		},
 		{
-			key = "shieldSpecialization", name = "Shield Specialization", maxRank = 3, kind = "conditional", tree = "Protection",
-			explain = "Increases the damage absorbed by your shield by 10% per rank and gives blocks a 33% chance per rank to restore 4% of your maximum mana.",
+			key = "shieldSpecialization", name = "Shield Specialization", maxRank = 2, kind = "conditional", tree = "Protection",
+			explain = "Increases shield absorption by 15% per rank and gives blocks a 50% chance per rank to restore 4% of your maximum mana, at most once every 3 sec.",
 		},
 		{
-			key = "sacredDuty", name = "Sacred Duty", maxRank = 2, kind = "stat", tree = "Protection",
-			effects = { { stat = "stam", op = "pct", perRank = { 0.02, 0.04 } } },
-			explain = "Increases your total Stamina by 2% per rank and reduces the cooldown of Divine Shield, Divine Protection and Templar's Bulwark by 30 sec per rank.",
+			key = "sacredDuty", name = "Sacred Duty", maxRank = 2, kind = "utility", tree = "Protection",
+			explain = "Reduces the cooldown of Divine Shield, Divine Protection and Templar's Bulwark by 30 sec per rank and the duration of Forbearance by 5 sec per rank.",
 		},
 		{
 			key = "swiftJudgement", name = "Swift Judgement", maxRank = 1, kind = "utility", tree = "Protection",
-			explain = "Finishes the cooldown of Judgement and makes your next Judgement free (1 min cooldown).",
+			explain = "Unleashes your Seal's Judgement effect on an enemy without consuming the Seal. Does not share a cooldown with Judgement.",
 		},
 		{
-			key = "oneHandedWeaponSpecialization", name = "One-Handed Weapon Specialization", maxRank = 3, kind = "conditional", tree = "Protection",
-			explain = "Increases the damage you deal with one-handed melee weapons by 3% at rank 1 and 10% at rank 3.",
+			key = "shieldsworn", name = "Shieldsworn", maxRank = 1, kind = "conditional", tree = "Protection",
+			explain = "Reduces Holy Strike's cooldown by 4 sec. Holy Strike uses your shield, triggering active Holy Shield and Shield Specialization without consuming charges or triggering cooldowns, and lets you block spells for 6 sec.",
 		},
 		{
 			key = "improvedHammerOfJustice", name = "Improved Hammer of Justice", maxRank = 3, kind = "utility", tree = "Protection",
@@ -147,15 +149,15 @@ ns.Data.PALADIN = {
 		},
 		{
 			key = "reckoning", name = "Reckoning", maxRank = 5, kind = "conditional", tree = "Protection",
-			explain = "Gives an 8% chance per rank after blocking, and 20% per rank after a critical hit against you, to gain an extra attack (stores up to 4).",
+			explain = "Gives an 8% chance per rank after blocking, and 20% per rank after a non-periodic critical strike against you, to gain an extra attack (stores up to 4). Block procs can occur at most once every 1.5 sec.",
 		},
 		{
-			key = "ironCreed", name = "Iron Creed", maxRank = 5, kind = "conditional", tree = "Protection",
-			explain = "Increases Holy Strike threat by 5% per rank; with Righteous Fury, Holy Strike also reduces damage taken by 2% per rank for 6 sec.",
+			key = "ironCreed", name = "Iron Creed", maxRank = 3, kind = "conditional", tree = "Protection",
+			explain = "Increases Holy Strike threat by 10% per rank; with Righteous Fury, Holy Strike also reduces damage taken by 2% per rank for 6 sec.",
 		},
 		{
 			key = "holyShield", name = "Holy Shield", maxRank = 1, kind = "conditional", tree = "Protection",
-			explain = "Increases your block chance by 30% for 10 sec (4 charges), dealing Holy damage on each block (10 sec cooldown).",
+			explain = "Increases your block chance by 30% for 10 sec (4 charges), dealing 75 Holy damage on each block with 20% additional threat.",
 		},
 		{
 			key = "deflection", name = "Deflection", maxRank = 5, kind = "stat", tree = "Retribution",
@@ -171,13 +173,16 @@ ns.Data.PALADIN = {
 			explain = "Reduces the cooldown of Judgement by 1 sec per rank.",
 		},
 		{
-			key = "holyConduit", name = "Holy Conduit", maxRank = 2, kind = "utility", tree = "Retribution",
+			key = "holyConduit", name = "Holy Conduit", maxRank = 2, kind = "utility", tree = "Holy",
 			explain = "Reduces the mana cost of Consecration, Holy Wrath, Exorcism and Hammer of Wrath by 20% per rank.",
 		},
 		{
-			key = "conviction", name = "Conviction", maxRank = 5, kind = "stat", tree = "Retribution",
-			effects = { { stat = "meleeCrit", op = "flat", perRank = { 1, 2, 3, 4, 5 } } },
-			explain = "Improves your melee critical strike chance by 1% per rank.",
+			key = "conviction", name = "Conviction", maxRank = 3, kind = "stat", tree = "Retribution",
+			effects = {
+				{ stat = "meleeCrit", op = "flat", perRank = { 2, 4, 6 } },
+				{ stat = "spellCrit", op = "flat", perRank = { 2, 4, 6 } },
+			},
+			explain = "Improves your critical strike chance with all spells and attacks by 2% per rank.",
 		},
 		{
 			key = "vindication", name = "Vindication", maxRank = 3, kind = "conditional", tree = "Retribution",
@@ -185,11 +190,11 @@ ns.Data.PALADIN = {
 		},
 		{
 			key = "sanctifiedJudgement", name = "Sanctified Judgement", maxRank = 3, kind = "conditional", tree = "Retribution",
-			explain = "Gives Judgement a 33% chance per rank to refund 20% per rank of the judged seal's mana cost.",
+			explain = "Gives Judgement a 33/66/100% chance to refund 20/40/60% of the judged seal's mana cost.",
 		},
 		{
 			key = "sealOfCommand", name = "Seal of Command", maxRank = 1, kind = "conditional", tree = "Retribution",
-			explain = "Grants Seal of Command: a chance on hit to deal extra Holy damage equal to 70% of weapon damage; can be judged.",
+			explain = "Grants Seal of Command for 30 sec: a chance on hit to deal extra Holy damage equal to 70% of weapon damage. Judgement deals 74 Holy damage, or 136 to 148 against stunned or incapacitated targets.",
 		},
 		{
 			key = "pursuitOfJustice", name = "Pursuit of Justice", maxRank = 2, kind = "utility", tree = "Retribution",
@@ -197,7 +202,7 @@ ns.Data.PALADIN = {
 		},
 		{
 			key = "eyeForAnEye", name = "Eye for an Eye", maxRank = 2, kind = "conditional", tree = "Retribution",
-			explain = "Critical strikes against you deal 5% per rank of the damage taken back to the attacker.",
+			explain = "Critical strikes against you deal 5% per rank of the damage taken back to the attacker, capped at 50% of your total health.",
 		},
 		{
 			key = "sacredArbiter", name = "Sacred Arbiter", maxRank = 1, kind = "conditional", tree = "Retribution",
@@ -205,28 +210,28 @@ ns.Data.PALADIN = {
 		},
 		{
 			key = "twoHandedWeaponSpecialization", name = "Two-Handed Weapon Specialization", maxRank = 3, kind = "conditional", tree = "Retribution",
-			explain = "Increases the damage you deal with two-handed melee weapons by 2% per rank.",
+			explain = "While a two-handed melee weapon is equipped, increases your Physical and Holy damage by 2% per rank and reduces all threat by 7/14/20%.",
 		},
 		{
 			key = "vengeance", name = "Vengeance", maxRank = 3, kind = "conditional", tree = "Retribution",
-			explain = "After a non-periodic critical strike, increases your Physical and Holy damage by 1% per rank for 30 sec, stacking up to 3 times.",
+			explain = "After a non-periodic critical strike, increases your Physical and Holy damage by 1% per rank for 30 sec, stacking up to 5 times.",
 		},
 		{
 			key = "repentance", name = "Repentance", maxRank = 1, kind = "utility", tree = "Retribution",
 			explain = "Grants Repentance: incapacitates a Humanoid for up to 6 sec; damage breaks it (1 min cooldown).",
 		},
 		{
-			key = "championOfTheLight", name = "Champion of the Light", maxRank = 3, kind = "stat", tree = "Retribution",
-			effects = { { stat = "sp", op = "fromStat", source = "int", perRank = { 0.10, 0.20, 0.30 } } },
-			explain = "Increases your spell damage by 10% per rank of your Intellect.",
+			key = "championOfTheLight", name = "Champion of the Light", maxRank = 5, kind = "stat", tree = "Retribution",
+			effects = { { stat = "sp", op = "fromStat", source = "int", perRank = { 0.12, 0.24, 0.36, 0.48, 0.60 } } },
+			explain = "Increases your spell damage by up to 12% of your Intellect per rank and reduces Hammer of Wrath's cast time by 0.2 sec per rank.",
 		},
 		{
-			key = "instrumentOfLaw", name = "Instrument of Law", maxRank = 2, kind = "conditional", tree = "Retribution",
-			explain = "Reduces the cast time of Hammer of Wrath by 0.5 sec per rank and your threat by 10% per rank while Righteous Fury is not active.",
+			key = "turnEvil", name = "Turn Evil", maxRank = 2, kind = "utility", tree = "Retribution",
+			explain = "Reduces Turn Undead's cast time by 0.5 sec per rank and cooldown by 5 sec per rank, and allows it to affect Demons.",
 		},
 		{
-			key = "twistOfLight", name = "Twist of Light", maxRank = 1, kind = "conditional", tree = "Retribution",
-			explain = "Reduces the mana cost of your Seals by 20%; replacing a Seal gives an Echo that applies the old Seal on your next melee attack.",
+			key = "unsealedWrath", name = "Unsealed Wrath", maxRank = 1, kind = "conditional", tree = "Retribution",
+			explain = "Melee attacks store your active Seal for 15 sec, up to 3 stacks. Attacking with a different Seal consumes the stacks, giving the stored Seal its normal chance to activate once per stack.",
 		},
 	},
 }

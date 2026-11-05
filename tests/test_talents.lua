@@ -55,7 +55,7 @@ local KINDS = { stat = 1, conditional = 1, utility = 1 }
 
 T.test("data integrity (all classes)", function()
 	local ns = load()
-	local expected = { SHAMAN = 50, DRUID = 52, WARRIOR = 53, PRIEST = 52, PALADIN = 50, MAGE = 53, HUNTER = 51, ROGUE = 54, WARLOCK = 52 }
+	local expected = { SHAMAN = 50, DRUID = 52, WARRIOR = 53, PRIEST = 52, PALADIN = 51, MAGE = 53, HUNTER = 51, ROGUE = 54, WARLOCK = 52 }
 	local classes = 0
 	for class, d in pairs(ns.Data) do
 		classes = classes + 1
@@ -333,10 +333,10 @@ T.test("Read matches one priest talent per tree", function()
 	T.eq(ns.Talents.ByName("Improved Power Word: Shield").key, "improvedPowerWordShield")
 end)
 
-T.test("paladin: 50 unique talents, 17/16/17 split", function()
+T.test("paladin: 51 unique talents, 17/17/17 split", function()
 	local ns = load()
 	local d = ns.Data.PALADIN
-	T.eq(d.tree, "Holy"); T.eq(#d.talents, 50)
+	T.eq(d.tree, "Holy"); T.eq(#d.talents, 51)
 	local names, trees = {}, {}
 	for _, t in ipairs(d.talents) do
 		T.truthy(not names[t.name], "unique name " .. t.name)
@@ -344,7 +344,7 @@ T.test("paladin: 50 unique talents, 17/16/17 split", function()
 		local tree = t.tree or "Holy"
 		trees[tree] = (trees[tree] or 0) + 1
 	end
-	T.eq(trees.Holy, 17); T.eq(trees.Protection, 16); T.eq(trees.Retribution, 17)
+	T.eq(trees.Holy, 17); T.eq(trees.Protection, 17); T.eq(trees.Retribution, 17)
 end)
 
 T.test("Read matches one paladin talent per tree", function()
