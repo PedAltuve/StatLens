@@ -2,7 +2,7 @@
 
 WoW: Forever addon that explains how your talents change your character stats.
 
-Supported: all nine classes (Shaman, Druid, Warrior, Priest, Paladin, Mage, Hunter, Rogue and Warlock), all three talent trees each. enUS client, Interface 16001 (beta build 1.60.1.70338).
+Supported: all nine classes (Shaman, Druid, Warrior, Priest, Paladin, Mage, Hunter, Rogue and Warlock), all three talent trees each. enUS client, Interface 16001 (talent data from build 1.60.1.70755, with the server hotfixes of 3 November 2026).
 
 Talents that change character sheet stats:
 
@@ -103,13 +103,13 @@ Assumption: talent percentages multiply the buffed stat. If the client stacks th
 
 ## Install
 
-Download the latest `StatLens-*-forever.zip` from [Releases](https://github.com/PedAltuve/StatLens/releases) and extract it into `World of Warcraft/_classic_beta_/Interface/AddOns/`, so you end up with `AddOns/StatLens/StatLens.toc`.
+Download the latest `StatLens-*-forever.zip` from [Releases](https://github.com/PedAltuve/StatLens/releases) and extract it into `World of Warcraft/_forever_/Interface/AddOns/`, so you end up with `AddOns/StatLens/StatLens.toc`.
 
 For development, link the repository instead (Linux / Wine example):
 
 ```sh
 ln -s ~/Projects/StatLens \
-  "$HOME/Games/battlenet/drive_c/Program Files (x86)/World of Warcraft/_classic_beta_/Interface/AddOns/StatLens"
+  "$HOME/Games/battlenet/drive_c/Program Files (x86)/World of Warcraft/_forever_/Interface/AddOns/StatLens"
 ```
 
 ## Releasing
