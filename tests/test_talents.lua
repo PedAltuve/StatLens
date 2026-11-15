@@ -605,3 +605,22 @@ T.test("condition keys come from Stats.WEAPONS and Stats.FORMS", function()
 	end
 	T.truthy(seen > 0, "some conditions checked")
 end)
+
+T.test("shaman build 70888: Mental Dexterity, Stormstrike and Maelstrom Weapon text", function()
+	local ns = load()
+	local by = {}
+	for _, t in ipairs(ns.Data.SHAMAN.talents) do by[t.key] = t end
+	local md = by.mentalDexterity.effects[1].perRank
+	T.eq(md[1], 0.33); T.eq(md[2], 0.66); T.eq(md[3], 1.00)
+	T.truthy(by.mentalDexterity.explain:find("33%/66%/100% of your Intellect", 1, true), by.mentalDexterity.explain)
+	local ss = by.stormstrike.explain
+	T.truthy(ss:find("100% weapon damage", 1, true), ss)
+	T.truthy(ss:find("8 sec cooldown", 1, true), ss)
+	T.truthy(ss:find("by 20% for 12 sec", 1, true), ss)
+	T.eq(ss:find("150%", 1, true), nil, "old Stormstrike value gone")
+	local mw = by.maelstromWeapon.explain
+	T.truthy(mw:find("20%", 1, true), mw)
+	T.truthy(mw:find("10/11.67/13.33/15/16.67", 1, true), mw)
+	T.truthy(mw:find("main-hand weapon speed", 1, true), mw)
+	T.eq(mw:find("4%", 1, true), nil, "old per-rank value gone")
+end)

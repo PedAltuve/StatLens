@@ -30,8 +30,8 @@ ns.Data.SHAMAN = {
 		},
 		{
 			key = "mentalDexterity", name = "Mental Dexterity", maxRank = 3, kind = "stat",
-			effects = { { stat = "ap", op = "fromStat", source = "int", perRank = { 0.50, 1.00, 1.50 } } },
-			explain = "Grants attack power equal to 50%/100%/150% of your Intellect.",
+			effects = { { stat = "ap", op = "fromStat", source = "int", perRank = { 0.33, 0.66, 1.00 } } },
+			explain = "Grants attack power equal to 33%/66%/100% of your Intellect.",
 		},
 		{
 			key = "improvedGhostWolf", name = "Improved Ghost Wolf", maxRank = 2, kind = "utility",
@@ -66,7 +66,7 @@ ns.Data.SHAMAN = {
 		},
 		{
 			key = "stormstrike", name = "Stormstrike", maxRank = 1, kind = "conditional",
-			explain = "Instantly strikes for 150% weapon damage and boosts your next Lightning Bolt, Chain Lightning or Earth Shock against the target by 20% for 12 sec.",
+			explain = "Instantly strikes for 100% weapon damage (8 sec cooldown) and boosts your next Lightning Bolt, Chain Lightning or Earth Shock against the target by 20% for 12 sec.",
 		},
 		{
 			key = "spiritWeapons", name = "Spirit Weapons", maxRank = 1, kind = "stat",
@@ -87,7 +87,7 @@ ns.Data.SHAMAN = {
 		},
 		{
 			key = "maelstromWeapon", name = "Maelstrom Weapon", maxRank = 5, kind = "conditional",
-			explain = "Stacks (up to 5) cut the cast time and mana cost of your next Lightning Bolt by 4% per rank each.",
+			explain = "Melee hits have a (10/11.67/13.33/15/16.67 x main-hand weapon speed)% chance to grant a stack; each stack (up to 5, 30 sec) cuts the cast time and mana cost of your next Lightning Bolt by 20%.",
 		},
 		{
 			key = "rageOfTheFarseer", name = "Rage of the Farseer", maxRank = 1, kind = "conditional",

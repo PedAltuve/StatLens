@@ -33,11 +33,11 @@ T.test("Format.Lines realistic case", function()
 	local _, ak = index(lines, "Ancestral Knowledge 5/5: +31")
 	T.truthy(ak, "pct part"); T.eq(ak.kind, "part"); T.eq(ak.indent, 1)
 
-	local md = index(lines, "Mental Dexterity 3/3: +512 (150% of Intellect)")
+	local md = index(lines, "Mental Dexterity 3/3: +341 (100% of Intellect)")
 	T.truthy(md, "fromStat part with verified rank values")
 	local chain = lines[md + 1]
-	T.eq(chain.text, "incl. +47 from Ancestral Knowledge"); T.eq(chain.kind, "chain"); T.eq(chain.indent, 2)
-	T.truthy(index(lines, "Attack Power 500 (talents +512)"))
+	T.eq(chain.text, "incl. +31 from Ancestral Knowledge"); T.eq(chain.kind, "chain"); T.eq(chain.indent, 2)
+	T.truthy(index(lines, "Attack Power 500 (talents +341)"))
 	T.truthy(index(lines, "Mental Quickness 2/2: +102 (30% of Intellect)"))
 	T.truthy(index(lines, "incl. +9 from Ancestral Knowledge"))
 
@@ -90,9 +90,9 @@ T.test("TooltipLines AK 2/5 with next point and chain", function()
 	local t = texts(lines)
 	T.eq(t[1], "StatLens"); T.near(lines[1].r, 1, 1e-9); T.near(lines[1].g, 0.82, 1e-9)
 	T.eq(t[2], "Now: +13 Intellect")
-	T.eq(t[3], "  incl. +20 Attack Power via Mental Dexterity")
+	T.eq(t[3], "  incl. +13 Attack Power via Mental Dexterity")
 	T.eq(t[4], "Next point (3/5): +7 Intellect")
-	T.eq(t[5], "  incl. +10 Attack Power via Mental Dexterity")
+	T.eq(t[5], "  incl. +7 Attack Power via Mental Dexterity")
 	T.eq(#t, 5)
 end)
 
@@ -137,14 +137,14 @@ T.test("StatTooltipLines", function()
 	local int = L("int")
 	T.eq(#int, 2)
 	T.eq(int[1], G .. "Talents add " .. E .. W .. "+1" .. E .. D .. " (Ancestral Knowledge 1/5)" .. E)
-	T.eq(int[2], G .. "Increases " .. E .. W .. "Attack Power" .. E .. G .. " by " .. E .. W .. "108" .. E
+	T.eq(int[2], G .. "Increases " .. E .. W .. "Attack Power" .. E .. G .. " by " .. E .. W .. "72" .. E
 		.. D .. " (Mental Dexterity 3/3)" .. E)
 
 	local ap = L("ap")
 	T.eq(#ap, 2)
-	T.eq(ap[1], G .. "Includes " .. E .. W .. "+108" .. E .. G .. " from " .. E .. W .. "Intellect" .. E
+	T.eq(ap[1], G .. "Includes " .. E .. W .. "+72" .. E .. G .. " from " .. E .. W .. "Intellect" .. E
 		.. D .. " (Mental Dexterity 3/3)" .. E)
-	T.eq(ap[2], D .. "  incl. +2 via Ancestral Knowledge" .. E)
+	T.eq(ap[2], D .. "  incl. +1 via Ancestral Knowledge" .. E)
 
 	local crit = L("meleeCrit")
 	T.eq(crit[1], G .. "Talents add " .. E .. W .. "+5.0%" .. E .. D .. " (Thundering Strikes 5/5)" .. E)
