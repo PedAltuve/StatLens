@@ -2,7 +2,7 @@
 
 WoW: Forever addon that explains how your talents change your character stats.
 
-Supported: all nine classes (Shaman, Druid, Warrior, Priest, Paladin, Mage, Hunter, Rogue and Warlock), all three talent trees each. enUS client, Interface 16001 (talent data from build 1.60.1.70755, with the server hotfixes of 3 November 2026).
+Supported: all nine classes (Shaman, Druid, Warrior, Priest, Paladin, Mage, Hunter, Rogue and Warlock), all three talent trees each. enUS client, Interface 16001 (talent data from build 1.60.1.70888, with the server hotfixes of 13 November 2026).
 
 Talents that change character sheet stats:
 
