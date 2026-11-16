@@ -70,7 +70,7 @@ ns.Data.WARLOCK = {
 		},
 		{
 			key = "soulSiphon", name = "Soul Siphon", maxRank = 3, kind = "conditional",
-			explain = "Drain Life, Drain Soul and Wrack deal 4% more per rank for each of your other Affliction effects on the target, up to 12% per rank.",
+			explain = "Drain Life, Drain Soul and Wrack deal 4% more per rank for each of your Corruption, Siphon Life and Bane of Agony effects on the target, up to 12% per rank.",
 		},
 		{
 			key = "shadowMastery", name = "Shadow Mastery", maxRank = 5, kind = "conditional",
@@ -78,7 +78,7 @@ ns.Data.WARLOCK = {
 		},
 		{
 			key = "wrack", name = "Wrack", maxRank = 1, kind = "conditional",
-			explain = "Grants Wrack: 86 Shadow damage every sec for 6 sec, and the target takes 10% more damage from your other Shadow damage over time effects.",
+			explain = "Grants Wrack: 60 Shadow damage every sec for 6 sec; while channeled, your Corruption, Siphon Life and Bane of Agony on the target deal their periodic damage 100% faster.",
 		},
 		{
 			key = "improvedHealthFunnel", name = "Improved Health Funnel", maxRank = 2, kind = "conditional", tree = "Demonology",
