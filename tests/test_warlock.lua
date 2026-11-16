@@ -63,3 +63,16 @@ T.test("Fel Vitality is explained, not measured", function()
 	local b = ns.Calc.Breakdown({ int = 100 }, { felVitality = 3 }, d)
 	T.eq(b.talents.felVitality, nil)
 end)
+
+T.test("warlock build 70888: Wrack and Soul Siphon text", function()
+	local _, d = load()
+	local by = {}
+	for _, x in ipairs(d.talents) do by[x.key] = x end
+	local wrack, siphon = by.wrack.explain, by.soulSiphon.explain
+	T.truthy(wrack:find("60 Shadow damage every sec for 6 sec", 1, true), wrack)
+	T.truthy(wrack:find("100% faster", 1, true), wrack)
+	T.eq(wrack:find("86", 1, true), nil, "old 86 damage gone")
+	T.eq(wrack:find("10% more", 1, true), nil, "old 10% damage taken gone")
+	T.truthy(siphon:find("Corruption, Siphon Life and Bane of Agony", 1, true), siphon)
+	T.eq(siphon:find("other Affliction", 1, true), nil, "no longer any Affliction effect")
+end)
